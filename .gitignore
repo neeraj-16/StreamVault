@@ -1,0 +1,29 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+ENV/
+bin/
+
+# Temporary video download cache
+downloads/*
+!downloads/.gitkeep
+
+# Python cache & compiler files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

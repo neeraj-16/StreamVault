@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamVault - Premium YouTube Downloader</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="description" content="Download YouTube videos in verified high-quality resolutions including 1080p, 2K, and 4K with audio merged instantly.">
+</head>
+<body>
+    <!-- Background Glows -->
+    <div class="glow-bg">
+        <div class="glow-sphere sphere-1"></div>
+        <div class="glow-sphere sphere-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fa-solid fa-cloud-arrow-down logo-icon"></i>
+                <span class="logo-text">Stream<span>Vault</span></span>
+            </div>
+            <p class="tagline">Premium YouTube Video Downloader</p>
+        </header>
+
+        <!-- Search Section -->
+        <main class="main-content">
+            <div class="glass-panel search-panel">
+                <h1 class="panel-title">Download in High Quality</h1>
+                <p class="panel-subtitle">Paste a YouTube video link below to verify formats and download up to 4K</p>
+                
+                <form id="url-form" class="search-form">
+                    <div class="input-wrapper">
+                        <i class="fa-brands fa-youtube input-icon"></i>
+                        <input 
+                            type="url" 
+                            id="video-url" 
+                            placeholder="Paste YouTube video link here... (e.g. https://www.youtube.com/watch?v=...)" 
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+                    <button type="submit" id="btn-fetch" class="btn-primary">
+                        <span class="btn-text">Analyze Video</span>
+                        <i class="fa-solid fa-wand-magic-sparkles btn-icon"></i>
+                        <span class="spinner hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                    </button>
+                </form>
+                
+                <div id="error-message" class="error-box hidden">
+                    <i class="fa-solid fa-triangle-exclamation error-icon"></i>
+                    <span id="error-text">An error occurred</span>
+                </div>
+            </div>
+
+            <!-- Video Preview & Quality Options Section (Hidden Initially) -->
+            <div id="result-panel" class="glass-panel result-panel hidden">
+                <div class="video-preview-header">
+                    <div class="thumbnail-wrapper">
+                        <img id="video-thumbnail" src="" alt="Video Thumbnail">
+                        <span id="video-duration" class="duration-badge">00:00</span>
+                    </div>
+                    <div class="video-meta">
+                        <h2 id="video-title" class="video-title">Video Title</h2>
+                        <p id="video-channel" class="video-channel"><i class="fa-solid fa-circle-user icon-channel"></i> Channel Name</p>
+                    </div>
+                </div>
+
+                <div class="quality-section">
+                    <h3 class="section-title"><i class="fa-solid fa-sliders"></i> Verified Download Options</h3>
+                    <p class="section-subtitle">We have verified the formats below are fully available for this video on YouTube.</p>
+                    
+                    <div id="quality-grid" class="quality-grid">
+                        <!-- Quality options will be loaded dynamically here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2026 StreamVault. Locally hosted & private. Auto-cleans download cache every 15 minutes.</p>
+        </footer>
+    </div>
+
+    <!-- Download Progress Modal (Overlay) -->
+    <div id="progress-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-content">
+            <div class="modal-header">
+                <div class="modal-title-wrapper">
+                    <i class="fa-solid fa-circle-notch fa-spin progress-spinner"></i>
+                    <h3 id="modal-status-title">Preparing Download</h3>
+                </div>
+            </div>
+            
+            <div class="modal-body">
+                <p id="modal-status-text" class="status-text">Connecting to YouTube streams...</p>
+                
+                <!-- Linear Progress Bar -->
+                <div class="progress-bar-container">
+                    <div id="progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                
+                <div class="progress-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Progress</span>
+                        <span id="stat-percent" class="stat-value">0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Speed</span>
+                        <span id="stat-speed" class="stat-value">N/A</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">ETA</span>
+                        <span id="stat-eta" class="stat-value">N/A</span>
+                    </div>
+                </div>
+
+                <div id="modal-success" class="modal-success hidden">
+                    <i class="fa-solid fa-circle-check success-icon"></i>
+                    <p class="success-title">Download Started!</p>
+                    <p class="success-desc">The file is being transferred directly to your device storage. Check your browser downloads.</p>
+                    <button id="btn-close-modal" class="btn-secondary">Done</button>
+                </div>
+                
+                <div id="modal-error" class="modal-error hidden">
+                    <i class="fa-solid fa-circle-xmark error-modal-icon"></i>
+                    <p class="error-title">Download Failed</p>
+                    <p id="modal-error-desc" class="error-desc">Could not download streams.</p>
+                    <button id="btn-close-error-modal" class="btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -108,10 +108,15 @@ def run_yt_dlp_json(url):
         os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cookies.txt'),
         '/etc/secrets/cookies.txt'
     ]
+    cookies_found = False
     for path in cookies_paths:
         if os.path.exists(path):
+            print(f"DEBUG: Found cookies at {path}", flush=True)
             cmd.extend(['--cookies', path])
+            cookies_found = True
             break
+    if not cookies_found:
+        print("DEBUG: No cookies.txt found in any expected paths", flush=True)
     
     # Run process
     result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
@@ -169,10 +174,15 @@ def download_video_task(url, height, download_id):
         os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cookies.txt'),
         '/etc/secrets/cookies.txt'
     ]
+    cookies_found = False
     for path in cookies_paths:
         if os.path.exists(path):
+            print(f"DEBUG: Found cookies at {path} for download", flush=True)
             cmd.extend(['--cookies', path])
+            cookies_found = True
             break
+    if not cookies_found:
+        print("DEBUG: No cookies.txt found for download", flush=True)
     
     try:
         process = subprocess.Popen(

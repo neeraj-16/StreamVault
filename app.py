@@ -94,6 +94,42 @@ def cleanup_old_files():
 cleanup_thread = threading.Thread(target=cleanup_old_files, daemon=True)
 cleanup_thread.start()
 
+def fix_cookies_format(path):
+    """Helper to convert space-separated Netscape cookie files to tab-separated format.
+    Copy-pasting cookies into text fields often converts tabs to spaces, which breaks yt-dlp.
+    """
+    try:
+        if not os.path.exists(path):
+            return
+        with open(path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            
+        fixed_lines = []
+        modified = False
+        
+        for line in lines:
+            if line.startswith('#') or not line.strip():
+                fixed_lines.append(line)
+                continue
+            
+            # Split by whitespace
+            parts = line.strip().split()
+            if len(parts) >= 7:
+                # Reconstruct with tab separation
+                new_line = '\t'.join(parts[:6] + [' '.join(parts[6:])]) + '\n'
+                fixed_lines.append(new_line)
+                if new_line != line:
+                    modified = True
+            else:
+                fixed_lines.append(line)
+                
+        if modified:
+            print(f"DEBUG: Auto-formatting cookies file at {path} (converting spaces to tabs)", flush=True)
+            with open(path, 'w', encoding='utf-8') as f:
+                f.writelines(fixed_lines)
+    except Exception as e:
+        print(f"DEBUG: Error fixing cookies format: {e}", flush=True)
+
 def run_yt_dlp_json(url):
     """Runs standalone yt-dlp in a subprocess to extract metadata as JSON."""
     cmd = [
@@ -111,6 +147,7 @@ def run_yt_dlp_json(url):
     cookies_found = False
     for path in cookies_paths:
         if os.path.exists(path):
+            fix_cookies_format(path)
             print(f"DEBUG: Found cookies at {path}", flush=True)
             cmd.extend(['--cookies', path])
             cookies_found = True
@@ -177,6 +214,7 @@ def download_video_task(url, height, download_id):
     cookies_found = False
     for path in cookies_paths:
         if os.path.exists(path):
+            fix_cookies_format(path)
             print(f"DEBUG: Found cookies at {path} for download", flush=True)
             cmd.extend(['--cookies', path])
             cookies_found = True

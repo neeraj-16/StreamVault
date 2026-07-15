@@ -101,11 +101,16 @@ def fix_cookies_format(path):
     try:
         if not os.path.exists(path):
             return
+        
+        size = os.path.getsize(path)
         with open(path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             
+        print(f"DEBUG: cookies.txt size is {size} bytes, lines: {len(lines)}", flush=True)
+        
         fixed_lines = []
         modified = False
+        cookie_count = 0
         
         for line in lines:
             if line.startswith('#') or not line.strip():
@@ -115,6 +120,7 @@ def fix_cookies_format(path):
             # Split by whitespace
             parts = line.strip().split()
             if len(parts) >= 7:
+                cookie_count += 1
                 # Reconstruct with tab separation
                 new_line = '\t'.join(parts[:6] + [' '.join(parts[6:])]) + '\n'
                 fixed_lines.append(new_line)
@@ -123,6 +129,8 @@ def fix_cookies_format(path):
             else:
                 fixed_lines.append(line)
                 
+        print(f"DEBUG: cookies.txt has {cookie_count} parsed cookie entries", flush=True)
+        
         if modified:
             print(f"DEBUG: Auto-formatting cookies file at {path} (converting spaces to tabs)", flush=True)
             with open(path, 'w', encoding='utf-8') as f:

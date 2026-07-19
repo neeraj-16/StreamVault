@@ -451,7 +451,7 @@ def serve_file(filename):
 
 # --- ClipCut Endpoints and Task Worker ---
 
-def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration, quality='best'):
+def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration, quality='best', custom_skip_start=0, custom_skip_end=0):
     job_dir = os.path.join(CLIPCUT_DIR, job_id)
     os.makedirs(job_dir, exist_ok=True)
     
@@ -548,23 +548,41 @@ def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, 
         effective_start = skip_start
         effective_end = duration - skip_end
         
-        if effective_end <= effective_start:
-            raise Exception("Skip times are greater than or equal to video duration.")
-            
-        effective_duration = effective_end - effective_start
+        playable_intervals = []
+        if custom_skip_start > 0 and custom_skip_end > custom_skip_start:
+            # First sub-segment: before custom skip
+            if custom_skip_start > effective_start:
+                playable_intervals.append((effective_start, min(effective_end, custom_skip_start)))
+            # Second sub-segment: after custom skip
+            if custom_skip_end < effective_end:
+                playable_intervals.append((max(effective_start, custom_skip_end), effective_end))
+        else:
+            if effective_end > effective_start:
+                playable_intervals.append((effective_start, effective_end))
+                
         import math
-        num_segments = math.ceil(effective_duration / clip_length)
-        
+        segments = []
+        for start, end in playable_intervals:
+            if end <= start:
+                continue
+            interval_duration = end - start
+            num_segs = math.ceil(interval_duration / clip_length)
+            for i in range(num_segs):
+                seg_start = start + i * clip_length
+                seg_duration = min(clip_length, end - seg_start)
+                segments.append((seg_start, seg_duration))
+                
+        num_segments = len(segments)
+        if num_segments == 0:
+            raise Exception("No playable video remaining after skips.")
+            
         clipcut_jobs[job_id].update({
             'status': 'processing',
             'progress': 0,
             'current_step': f"Splitting into {num_segments} clips..."
         })
         
-        for i in range(num_segments):
-            segment_start_time = effective_start + i * clip_length
-            segment_duration = min(clip_length, effective_end - segment_start_time)
-            
+        for i, (segment_start_time, segment_duration) in enumerate(segments):
             output_filename = f"clip_{i+1}.mp4"
             output_clip_path = os.path.join(job_dir, output_filename)
             
@@ -706,6 +724,8 @@ def clipcut_process():
     crop_9_16 = bool(data.get('crop_9_16', False))
     skip_start = int(data.get('skip_start', 0))
     skip_end = int(data.get('skip_end', 0))
+    custom_skip_start = int(data.get('custom_skip_start', 0))
+    custom_skip_end = int(data.get('custom_skip_end', 0))
     duration = int(data.get('duration', 0))
     quality = data.get('quality', 'best')
     
@@ -717,7 +737,7 @@ def clipcut_process():
     # Start thread
     thread = threading.Thread(
         target=run_clipcut_task,
-        args=(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration, quality)
+        args=(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration, quality, custom_skip_start, custom_skip_end)
     )
     thread.daemon = True
     thread.start()

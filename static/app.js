@@ -330,6 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const configClipQuality = document.getElementById('config-clip-quality');
     const configSkipStart = document.getElementById('config-skip-start');
     const configSkipEnd = document.getElementById('config-skip-end');
+    const configCustomSkipStart = document.getElementById('config-custom-skip-start');
+    const configCustomSkipEnd = document.getElementById('config-custom-skip-end');
 
     const summaryClipsCount = document.getElementById('summary-clips-count');
     const summaryEstTime = document.getElementById('summary-est-time');
@@ -425,11 +427,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const duration = clipcutVideoInfo.duration;
         const skipStart = parseInt(configSkipStart.value) || 0;
         const skipEnd = parseInt(configSkipEnd.value) || 0;
+        const customSkipStart = parseInt(configCustomSkipStart.value) || 0;
+        const customSkipEnd = parseInt(configCustomSkipEnd.value) || 0;
         const clipLen = parseInt(configClipLength.value) || 60;
         const aspect = configAspectRatio.value;
 
-        const effectiveDuration = Math.max(0, duration - skipStart - skipEnd);
-        const numClips = Math.ceil(effectiveDuration / clipLen);
+        // Calculate intervals
+        const effectiveStart = skipStart;
+        const effectiveEnd = duration - skipEnd;
+
+        let numClips = 0;
+        if (customSkipStart > 0 && customSkipEnd > customSkipStart) {
+            // First region
+            if (customSkipStart > effectiveStart) {
+                const dur1 = Math.min(effectiveEnd, customSkipStart) - effectiveStart;
+                if (dur1 > 0) numClips += Math.ceil(dur1 / clipLen);
+            }
+            // Second region
+            if (customSkipEnd < effectiveEnd) {
+                const dur2 = effectiveEnd - Math.max(effectiveStart, customSkipEnd);
+                if (dur2 > 0) numClips += Math.ceil(dur2 / clipLen);
+            }
+        } else {
+            const effectiveDuration = Math.max(0, effectiveEnd - effectiveStart);
+            numClips = Math.ceil(effectiveDuration / clipLen);
+        }
 
         summaryClipsCount.textContent = `${numClips} clips`;
 
@@ -442,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Attach recalculation event listeners
-    [configClipLength, configAspectRatio, configClipQuality, configSkipStart, configSkipEnd].forEach(el => {
+    [configClipLength, configAspectRatio, configClipQuality, configSkipStart, configSkipEnd, configCustomSkipStart, configCustomSkipEnd].forEach(el => {
         el.addEventListener('change', recalculateEstimations);
         el.addEventListener('input', recalculateEstimations);
     });
@@ -462,6 +484,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const quality = configClipQuality.value;
         const skipStart = parseInt(configSkipStart.value) || 0;
         const skipEnd = parseInt(configSkipEnd.value) || 0;
+        const customSkipStart = parseInt(configCustomSkipStart.value) || 0;
+        const customSkipEnd = parseInt(configCustomSkipEnd.value) || 0;
 
         // Hide config and show progress views
         clipcutConfigPanel.classList.add('hidden');
@@ -483,6 +507,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     quality: quality,
                     skip_start: skipStart,
                     skip_end: skipEnd,
+                    custom_skip_start: customSkipStart,
+                    custom_skip_end: customSkipEnd,
                     duration: clipcutVideoInfo.duration
                 })
             });

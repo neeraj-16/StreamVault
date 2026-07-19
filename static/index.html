@@ -31,55 +31,226 @@
             <p class="tagline">Premium YouTube Video Downloader</p>
         </header>
 
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button id="tab-downloader" class="nav-tab active">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Downloader
+            </button>
+            <button id="tab-clipcut" class="nav-tab">
+                <i class="fa-solid fa-scissors"></i> ClipCut Shorts
+            </button>
+        </nav>
+
         <!-- Search Section -->
         <main class="main-content">
-            <div class="glass-panel search-panel">
-                <h1 class="panel-title">Download in High Quality</h1>
-                <p class="panel-subtitle">Paste a YouTube video link below to verify formats and download up to 4K</p>
-                
-                <form id="url-form" class="search-form">
-                    <div class="input-wrapper">
-                        <i class="fa-brands fa-youtube input-icon"></i>
-                        <input 
-                            type="url" 
-                            id="video-url" 
-                            placeholder="Paste YouTube video link here... (e.g. https://www.youtube.com/watch?v=...)" 
-                            required
-                            autocomplete="off"
-                        >
+            <!-- Downloader Tab Content -->
+            <div id="downloader-content" class="tab-content">
+                <div class="glass-panel search-panel">
+                    <h1 class="panel-title">Download in High Quality</h1>
+                    <p class="panel-subtitle">Paste a YouTube video link below to verify formats and download up to 4K</p>
+                    
+                    <form id="url-form" class="search-form">
+                        <div class="input-wrapper">
+                            <i class="fa-brands fa-youtube input-icon"></i>
+                            <input 
+                                type="url" 
+                                id="video-url" 
+                                placeholder="Paste YouTube video link here... (e.g. https://www.youtube.com/watch?v=...)" 
+                                required
+                                autocomplete="off"
+                            >
+                        </div>
+                        <button type="submit" id="btn-fetch" class="btn-primary">
+                            <span class="btn-text">Analyze Video</span>
+                            <i class="fa-solid fa-wand-magic-sparkles btn-icon"></i>
+                            <span class="spinner hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                        </button>
+                    </form>
+                    
+                    <div id="error-message" class="error-box hidden">
+                        <i class="fa-solid fa-triangle-exclamation error-icon"></i>
+                        <span id="error-text">An error occurred</span>
                     </div>
-                    <button type="submit" id="btn-fetch" class="btn-primary">
-                        <span class="btn-text">Analyze Video</span>
-                        <i class="fa-solid fa-wand-magic-sparkles btn-icon"></i>
-                        <span class="spinner hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-                    </button>
-                </form>
-                
-                <div id="error-message" class="error-box hidden">
-                    <i class="fa-solid fa-triangle-exclamation error-icon"></i>
-                    <span id="error-text">An error occurred</span>
+                </div>
+
+                <!-- Video Preview & Quality Options Section (Hidden Initially) -->
+                <div id="result-panel" class="glass-panel result-panel hidden">
+                    <div class="video-preview-header">
+                        <div class="thumbnail-wrapper">
+                            <img id="video-thumbnail" src="" alt="Video Thumbnail">
+                            <span id="video-duration" class="duration-badge">00:00</span>
+                        </div>
+                        <div class="video-meta">
+                            <h2 id="video-title" class="video-title">Video Title</h2>
+                            <p id="video-channel" class="video-channel"><i class="fa-solid fa-circle-user icon-channel"></i> Channel Name</p>
+                        </div>
+                    </div>
+
+                    <div class="quality-section">
+                        <h3 class="section-title"><i class="fa-solid fa-sliders"></i> Verified Download Options</h3>
+                        <p class="section-subtitle">We have verified the formats below are fully available for this video on YouTube.</p>
+                        
+                        <div id="quality-grid" class="quality-grid">
+                            <!-- Quality options will be loaded dynamically here -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Video Preview & Quality Options Section (Hidden Initially) -->
-            <div id="result-panel" class="glass-panel result-panel hidden">
-                <div class="video-preview-header">
-                    <div class="thumbnail-wrapper">
-                        <img id="video-thumbnail" src="" alt="Video Thumbnail">
-                        <span id="video-duration" class="duration-badge">00:00</span>
-                    </div>
-                    <div class="video-meta">
-                        <h2 id="video-title" class="video-title">Video Title</h2>
-                        <p id="video-channel" class="video-channel"><i class="fa-solid fa-circle-user icon-channel"></i> Channel Name</p>
+            <!-- ClipCut Tab Content -->
+            <div id="clipcut-content" class="tab-content hidden">
+                <div class="glass-panel search-panel">
+                    <h1 class="panel-title">ClipCut Shorts Creator</h1>
+                    <p class="panel-subtitle">Paste a YouTube URL to split it into vertical segments (Shorts) instantly</p>
+                    
+                    <form id="clipcut-url-form" class="search-form">
+                        <div class="input-wrapper">
+                            <i class="fa-brands fa-youtube input-icon"></i>
+                            <input 
+                                type="url" 
+                                id="clipcut-video-url" 
+                                placeholder="Paste YouTube video link here... (e.g. https://www.youtube.com/watch?v=...)" 
+                                required
+                                autocomplete="off"
+                            >
+                        </div>
+                        
+                        <!-- Rights confirmation checkbox -->
+                        <div class="rights-wrapper">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="confirm-rights" required>
+                                <span class="checkmark"></span>
+                                <span class="label-text">I confirm I have the rights to use, remix, or share this content.</span>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" id="btn-clipcut-fetch" class="btn-primary">
+                            <span class="btn-text">Analyze Video</span>
+                            <i class="fa-solid fa-wand-magic-sparkles btn-icon"></i>
+                            <span class="spinner hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                        </button>
+                    </form>
+                    
+                    <div id="clipcut-error-message" class="error-box hidden">
+                        <i class="fa-solid fa-triangle-exclamation error-icon"></i>
+                        <span id="clipcut-error-text">An error occurred</span>
                     </div>
                 </div>
 
-                <div class="quality-section">
-                    <h3 class="section-title"><i class="fa-solid fa-sliders"></i> Verified Download Options</h3>
-                    <p class="section-subtitle">We have verified the formats below are fully available for this video on YouTube.</p>
+                <!-- ClipCut Configuration Panel (Hidden Initially) -->
+                <div id="clipcut-config-panel" class="glass-panel result-panel hidden">
+                    <div class="video-preview-header">
+                        <div class="thumbnail-wrapper">
+                            <img id="clipcut-thumbnail" src="" alt="Video Thumbnail">
+                            <span id="clipcut-duration-badge" class="duration-badge">00:00</span>
+                        </div>
+                        <div class="video-meta">
+                            <h2 id="clipcut-title" class="video-title">Video Title</h2>
+                            <p id="clipcut-channel" class="video-channel"><i class="fa-solid fa-circle-user icon-channel"></i> Channel Name</p>
+                            <p id="clipcut-resolution" class="resolution-badge-text"><i class="fa-solid fa-expand"></i> 1920x1080 @ 30fps</p>
+                        </div>
+                    </div>
                     
-                    <div id="quality-grid" class="quality-grid">
-                        <!-- Quality options will be loaded dynamically here -->
+                    <!-- Low Quality Alert -->
+                    <div id="clipcut-quality-warning" class="warning-box hidden">
+                        <i class="fa-solid fa-triangle-exclamation warning-icon"></i>
+                        <span><strong>Warning:</strong> The video resolution is below 720p. Output Shorts may look poor.</span>
+                    </div>
+
+                    <div class="quality-section">
+                        <h3 class="section-title"><i class="fa-solid fa-sliders"></i> Configure Shorts Grid</h3>
+                        <p class="section-subtitle">Choose clip durations, cropping rules, and skip buffer times.</p>
+                        
+                        <div class="config-grid">
+                            <!-- Clip Length Selector -->
+                            <div class="config-item">
+                                <label for="config-clip-length">Clip Duration</label>
+                                <select id="config-clip-length" class="config-select">
+                                    <option value="30">30 Seconds</option>
+                                    <option value="45">45 Seconds</option>
+                                    <option value="60" selected>60 Seconds (Standard Short)</option>
+                                    <option value="90">90 Seconds</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Aspect Ratio Selector -->
+                            <div class="config-item">
+                                <label for="config-aspect-ratio">Aspect Ratio</label>
+                                <select id="config-aspect-ratio" class="config-select">
+                                    <option value="original">Keep Original Aspect Ratio</option>
+                                    <option value="crop_9_16" selected>Crop to 9:16 Vertical Shorts (Center-Cut)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Skip start seconds -->
+                            <div class="config-item">
+                                <label for="config-skip-start">Skip Intro (Seconds)</label>
+                                <input type="number" id="config-skip-start" class="config-input" min="0" value="0">
+                            </div>
+                            
+                            <!-- Skip end seconds -->
+                            <div class="config-item">
+                                <label for="config-skip-end">Skip Outro (Seconds)</label>
+                                <input type="number" id="config-skip-end" class="config-input" min="0" value="0">
+                            </div>
+                        </div>
+
+                        <!-- Info details before processing -->
+                        <div class="summary-box">
+                            <div class="summary-row">
+                                <span>Expected Clip Output:</span>
+                                <span id="summary-clips-count" class="summary-val">0 clips</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Estimated Processing Time:</span>
+                                <span id="summary-est-time" class="summary-val">Fast (Copying streams...)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="action-wrapper">
+                            <button id="btn-generate-clips" class="btn-primary btn-generate">
+                                <span>Generate Clips</span>
+                                <i class="fa-solid fa-scissors"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ClipCut Processing Panel (Hidden Initially) -->
+                <div id="clipcut-process-panel" class="glass-panel result-panel hidden">
+                    <div class="modal-title-wrapper">
+                        <i class="fa-solid fa-circle-notch fa-spin progress-spinner"></i>
+                        <h3 id="process-status-title">Processing Video Segments</h3>
+                    </div>
+                    <p id="process-status-text" class="status-text">Fetching details and cutting tracks...</p>
+                    
+                    <div class="progress-bar-container">
+                        <div id="process-progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+                    </div>
+                    
+                    <div class="progress-stats">
+                        <div class="stat-item" style="grid-column: 1 / -1;">
+                            <span class="stat-label">Current Task</span>
+                            <span id="process-task-log" class="stat-value">Downloading full stream...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ClipCut Results Panel (Hidden Initially) -->
+                <div id="clipcut-results-panel" class="glass-panel result-panel hidden">
+                    <div class="results-header-actions">
+                        <div class="results-title-meta">
+                            <h3 class="section-title"><i class="fa-solid fa-film"></i> Generated Shorts</h3>
+                            <p class="section-subtitle">Your vertical clips have been processed successfully. Download below:</p>
+                        </div>
+                        <button id="btn-download-zip" class="btn-primary btn-zip-download">
+                            <span>Download All as ZIP</span>
+                            <i class="fa-solid fa-file-zipper"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="clips-grid" class="clips-grid">
+                        <!-- Clips cards will be loaded dynamically here -->
                     </div>
                 </div>
             </div>

@@ -30,4 +30,4 @@ ENV FLASK_ENV=production
 # Install gunicorn for production server
 RUN pip install gunicorn
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "4", "app:app"]

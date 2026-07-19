@@ -163,6 +163,7 @@ def run_yt_dlp_json(url):
     """Runs standalone yt-dlp in a subprocess to extract metadata as JSON."""
     cmd = [
         YT_DLP_BIN,
+        '--no-config',
         '--js-runtimes', 'node',
         '--ffmpeg-location', FFMPEG_EXE,
         '-J',
@@ -226,6 +227,7 @@ def download_video_task(url, height, download_id):
     
     cmd = [
         YT_DLP_BIN,
+        '--no-config',
         '--js-runtimes', 'node',
         '--ffmpeg-location', FFMPEG_EXE,
         '-f', f'bestvideo[height={height}]+bestaudio/best[height={height}]/best',
@@ -475,6 +477,7 @@ def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, 
         
     cmd = [
         YT_DLP_BIN,
+        '--no-config',
         '--js-runtimes', 'node',
         '--ffmpeg-location', FFMPEG_EXE,
         '-f', fmt,

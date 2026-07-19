@@ -182,7 +182,7 @@ body {
     font-size: 1.3rem;
 }
 
-#video-url {
+#video-url, #clipcut-video-url {
     width: 100%;
     background: rgba(0, 0, 0, 0.35);
     border: 1px solid var(--border-glass);
@@ -195,7 +195,7 @@ body {
     transition: var(--transition-smooth);
 }
 
-#video-url:focus {
+#video-url:focus, #clipcut-video-url:focus {
     border-color: var(--accent-purple);
     box-shadow: 0 0 20px rgba(155, 93, 229, 0.2);
     background: rgba(0, 0, 0, 0.5);

@@ -6,6 +6,7 @@ import subprocess
 import json
 import re
 import traceback
+import zipfile
 from flask import Flask, request, jsonify, send_from_directory
 import imageio_ffmpeg
 

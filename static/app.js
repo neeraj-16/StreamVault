@@ -4,6 +4,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoUrlInput = document.getElementById('video-url');
     const btnFetch = document.getElementById('btn-fetch');
 
+    async function handleApiResponse(response, defaultErrorMsg) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            try {
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || defaultErrorMsg);
+                }
+                return data;
+            } catch (e) {
+                if (e.message && e.message.indexOf("Server error") === -1 && e.message !== defaultErrorMsg && !data) {
+                    throw new Error(defaultErrorMsg);
+                }
+                throw e;
+            }
+        } else {
+            throw new Error("Server error (Status " + response.status + "). Please check your cookies.txt or server logs.");
+        }
+    }
+
     // Check if opened via file:// protocol
     if (window.location.protocol === 'file:') {
         errorText.innerHTML = '<strong>Warning:</strong> You opened this file directly from the Finder (using the <code>file://</code> protocol). You must open <strong><a href="http://127.0.0.1:5000" target="_blank" style="color: #fca5a5; text-decoration: underline;">http://127.0.0.1:5000</a></strong> in your browser to run the downloader.';
@@ -72,11 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ url })
             });
             
-            const data = await response.json();
-            
-            if (!response.ok || data.error) {
-                throw new Error(data.error || 'Failed to extract video information.');
-            }
+            const data = await handleApiResponse(response, 'Failed to extract video information.');
             
             currentVideoUrl = url;
             
@@ -177,11 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
             
-            const data = await response.json();
-            
-            if (!response.ok || data.error) {
-                throw new Error(data.error || 'Failed to start download task.');
-            }
+            const data = await handleApiResponse(response, 'Failed to start download task.');
             
             // Start polling
             const downloadId = data.download_id;
@@ -199,11 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pollInterval = setInterval(async () => {
             try {
                 const response = await fetch(`/api/progress/${downloadId}`);
-                if (!response.ok) {
-                    throw new Error('Lost connection to download state.');
-                }
-                
-                const data = await response.json();
+                const data = await handleApiResponse(response, 'Lost connection to download state.');
                 
                 if (data.status === 'downloading') {
                     modalStatusTitle.textContent = "Downloading Video";
@@ -380,11 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ url })
             });
 
-            const data = await response.json();
-
-            if (!response.ok || data.error) {
-                throw new Error(data.error || 'Failed to extract video information.');
-            }
+            const data = await handleApiResponse(response, 'Failed to extract video information.');
 
             clipcutVideoInfo = data;
             clipcutVideoInfo.url = url;
@@ -513,10 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            const data = await response.json();
-            if (!response.ok || data.error) {
-                throw new Error(data.error || 'Failed to start cutting job.');
-            }
+            const data = await handleApiResponse(response, 'Failed to start cutting job.');
 
             clipcutJobId = data.job_id;
             pollClipcutProgress(clipcutJobId);
@@ -534,11 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clipcutPollInterval = setInterval(async () => {
             try {
                 const response = await fetch(`/api/clipcut/status/${jobId}`);
-                if (!response.ok) {
-                    throw new Error('Lost connection to segments processor.');
-                }
-
-                const data = await response.json();
+                const data = await handleApiResponse(response, 'Lost connection to segments processor.');
 
                 if (data.status === 'downloading') {
                     processStatusText.textContent = "Fetching high-quality stream from YouTube...";

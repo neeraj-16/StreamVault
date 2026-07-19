@@ -327,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const configClipLength = document.getElementById('config-clip-length');
     const configAspectRatio = document.getElementById('config-aspect-ratio');
+    const configClipQuality = document.getElementById('config-clip-quality');
     const configSkipStart = document.getElementById('config-skip-start');
     const configSkipEnd = document.getElementById('config-skip-end');
 
@@ -441,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Attach recalculation event listeners
-    [configClipLength, configAspectRatio, configSkipStart, configSkipEnd].forEach(el => {
+    [configClipLength, configAspectRatio, configClipQuality, configSkipStart, configSkipEnd].forEach(el => {
         el.addEventListener('change', recalculateEstimations);
         el.addEventListener('input', recalculateEstimations);
     });
@@ -458,6 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const clipLen = parseInt(configClipLength.value) || 60;
         const aspect = configAspectRatio.value;
+        const quality = configClipQuality.value;
         const skipStart = parseInt(configSkipStart.value) || 0;
         const skipEnd = parseInt(configSkipEnd.value) || 0;
 
@@ -478,6 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     url: clipcutVideoInfo.url,
                     clip_length: clipLen,
                     crop_9_16: aspect === 'crop_9_16',
+                    quality: quality,
                     skip_start: skipStart,
                     skip_end: skipEnd,
                     duration: clipcutVideoInfo.duration

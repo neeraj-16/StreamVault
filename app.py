@@ -451,7 +451,7 @@ def serve_file(filename):
 
 # --- ClipCut Endpoints and Task Worker ---
 
-def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration):
+def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration, quality='best'):
     job_dir = os.path.join(CLIPCUT_DIR, job_id)
     os.makedirs(job_dir, exist_ok=True)
     
@@ -467,11 +467,17 @@ def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, 
     # Download path
     outtmpl = os.path.join(job_dir, 'full.%(ext)s')
     
+    # Format selection depending on requested quality height
+    if quality == 'best':
+        fmt = 'bestvideo+bestaudio/best'
+    else:
+        fmt = f'bestvideo[height<={quality}]+bestaudio/best[height<={quality}]/best'
+        
     cmd = [
         YT_DLP_BIN,
         '--js-runtimes', 'node',
         '--ffmpeg-location', FFMPEG_EXE,
-        '-f', 'bestvideo+bestaudio/best',
+        '-f', fmt,
         '-o', outtmpl,
         '--merge-output-format', 'mp4',
         '--newline',
@@ -701,6 +707,7 @@ def clipcut_process():
     skip_start = int(data.get('skip_start', 0))
     skip_end = int(data.get('skip_end', 0))
     duration = int(data.get('duration', 0))
+    quality = data.get('quality', 'best')
     
     if duration <= 0:
         return jsonify({'error': 'Invalid video duration'}), 400
@@ -710,7 +717,7 @@ def clipcut_process():
     # Start thread
     thread = threading.Thread(
         target=run_clipcut_task,
-        args=(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration)
+        args=(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration, quality)
     )
     thread.daemon = True
     thread.start()

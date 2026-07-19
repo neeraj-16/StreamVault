@@ -920,3 +920,20 @@ body {
     border-color: transparent;
     box-shadow: 0 4px 12px rgba(155, 93, 229, 0.2);
 }
+
+/* Time Input Row (Minutes:Seconds) */
+.time-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+.time-input-row input {
+    flex: 1;
+    text-align: center;
+}
+.time-sep {
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 1.1rem;
+}

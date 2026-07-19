@@ -198,28 +198,44 @@
                                 </select>
                             </div>
                             
-                            <!-- Skip start seconds -->
+                            <!-- Skip Intro (Min & Sec) -->
                             <div class="config-item">
-                                <label for="config-skip-start">Skip Intro (Seconds)</label>
-                                <input type="number" id="config-skip-start" class="config-input" min="0" value="0">
+                                <label>Skip Intro (Min : Sec)</label>
+                                <div class="time-input-row">
+                                    <input type="number" id="config-skip-start-min" class="config-input min-input" min="0" value="0" placeholder="Min">
+                                    <span class="time-sep">:</span>
+                                    <input type="number" id="config-skip-start-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                                </div>
                             </div>
                             
-                            <!-- Skip end seconds -->
+                            <!-- Skip Outro (Min & Sec) -->
                             <div class="config-item">
-                                <label for="config-skip-end">Skip Outro (Seconds)</label>
-                                <input type="number" id="config-skip-end" class="config-input" min="0" value="0">
+                                <label>Skip Outro (Min : Sec)</label>
+                                <div class="time-input-row">
+                                    <input type="number" id="config-skip-end-min" class="config-input min-input" min="0" value="0" placeholder="Min">
+                                    <span class="time-sep">:</span>
+                                    <input type="number" id="config-skip-end-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                                </div>
                             </div>
                             
                             <!-- Custom Skip Segment (Start) -->
                             <div class="config-item">
-                                <label for="config-custom-skip-start">Custom Skip Start (Sec)</label>
-                                <input type="number" id="config-custom-skip-start" class="config-input" min="0" value="0" placeholder="e.g. 120">
+                                <label>Custom Skip Start (Min : Sec)</label>
+                                <div class="time-input-row">
+                                    <input type="number" id="config-custom-skip-start-min" class="config-input min-input" min="0" value="0" placeholder="Min">
+                                    <span class="time-sep">:</span>
+                                    <input type="number" id="config-custom-skip-start-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                                </div>
                             </div>
                             
                             <!-- Custom Skip Segment (End) -->
                             <div class="config-item">
-                                <label for="config-custom-skip-end">Custom Skip End (Sec)</label>
-                                <input type="number" id="config-custom-skip-end" class="config-input" min="0" value="0" placeholder="e.g. 180">
+                                <label>Custom Skip End (Min : Sec)</label>
+                                <div class="time-input-row">
+                                    <input type="number" id="config-custom-skip-end-min" class="config-input min-input" min="0" value="0" placeholder="Min">
+                                    <span class="time-sep">:</span>
+                                    <input type="number" id="config-custom-skip-end-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                                </div>
                             </div>
                         </div>
 

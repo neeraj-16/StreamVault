@@ -337,10 +337,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const configClipLength = document.getElementById('config-clip-length');
     const configAspectRatio = document.getElementById('config-aspect-ratio');
     const configClipQuality = document.getElementById('config-clip-quality');
-    const configSkipStart = document.getElementById('config-skip-start');
-    const configSkipEnd = document.getElementById('config-skip-end');
-    const configCustomSkipStart = document.getElementById('config-custom-skip-start');
-    const configCustomSkipEnd = document.getElementById('config-custom-skip-end');
+    const configSkipStartMin = document.getElementById('config-skip-start-min');
+    const configSkipStartSec = document.getElementById('config-skip-start-sec');
+    const configSkipEndMin = document.getElementById('config-skip-end-min');
+    const configSkipEndSec = document.getElementById('config-skip-end-sec');
+    const configCustomSkipStartMin = document.getElementById('config-custom-skip-start-min');
+    const configCustomSkipStartSec = document.getElementById('config-custom-skip-start-sec');
+    const configCustomSkipEndMin = document.getElementById('config-custom-skip-end-min');
+    const configCustomSkipEndSec = document.getElementById('config-custom-skip-end-sec');
 
     const summaryClipsCount = document.getElementById('summary-clips-count');
     const summaryEstTime = document.getElementById('summary-est-time');
@@ -430,10 +434,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!clipcutVideoInfo) return;
 
         const duration = clipcutVideoInfo.duration;
-        const skipStart = parseInt(configSkipStart.value) || 0;
-        const skipEnd = parseInt(configSkipEnd.value) || 0;
-        const customSkipStart = parseInt(configCustomSkipStart.value) || 0;
-        const customSkipEnd = parseInt(configCustomSkipEnd.value) || 0;
+        const skipStart = (parseInt(configSkipStartMin.value) || 0) * 60 + (parseInt(configSkipStartSec.value) || 0);
+        const skipEnd = (parseInt(configSkipEndMin.value) || 0) * 60 + (parseInt(configSkipEndSec.value) || 0);
+        const customSkipStart = (parseInt(configCustomSkipStartMin.value) || 0) * 60 + (parseInt(configCustomSkipStartSec.value) || 0);
+        const customSkipEnd = (parseInt(configCustomSkipEndMin.value) || 0) * 60 + (parseInt(configCustomSkipEndSec.value) || 0);
         const clipLen = parseInt(configClipLength.value) || 60;
         const aspect = configAspectRatio.value;
 
@@ -469,7 +473,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Attach recalculation event listeners
-    [configClipLength, configAspectRatio, configClipQuality, configSkipStart, configSkipEnd, configCustomSkipStart, configCustomSkipEnd].forEach(el => {
+    [configClipLength, configAspectRatio, configClipQuality, 
+     configSkipStartMin, configSkipStartSec, 
+     configSkipEndMin, configSkipEndSec, 
+     configCustomSkipStartMin, configCustomSkipStartSec, 
+     configCustomSkipEndMin, configCustomSkipEndSec].forEach(el => {
         el.addEventListener('change', recalculateEstimations);
         el.addEventListener('input', recalculateEstimations);
     });
@@ -487,10 +495,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const clipLen = parseInt(configClipLength.value) || 60;
         const aspect = configAspectRatio.value;
         const quality = configClipQuality.value;
-        const skipStart = parseInt(configSkipStart.value) || 0;
-        const skipEnd = parseInt(configSkipEnd.value) || 0;
-        const customSkipStart = parseInt(configCustomSkipStart.value) || 0;
-        const customSkipEnd = parseInt(configCustomSkipEnd.value) || 0;
+        const skipStart = (parseInt(configSkipStartMin.value) || 0) * 60 + (parseInt(configSkipStartSec.value) || 0);
+        const skipEnd = (parseInt(configSkipEndMin.value) || 0) * 60 + (parseInt(configSkipEndSec.value) || 0);
+        const customSkipStart = (parseInt(configCustomSkipStartMin.value) || 0) * 60 + (parseInt(configCustomSkipStartSec.value) || 0);
+        const customSkipEnd = (parseInt(configCustomSkipEndMin.value) || 0) * 60 + (parseInt(configCustomSkipEndSec.value) || 0);
 
         // Hide config and show progress views
         clipcutConfigPanel.classList.add('hidden');

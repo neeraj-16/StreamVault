@@ -339,8 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const configClipQuality = document.getElementById('config-clip-quality');
     const configSkipStartMin = document.getElementById('config-skip-start-min');
     const configSkipStartSec = document.getElementById('config-skip-start-sec');
-    const configSkipEndMin = document.getElementById('config-skip-end-min');
-    const configSkipEndSec = document.getElementById('config-skip-end-sec');
+    const configSkipEndStartMin = document.getElementById('config-skip-end-start-min');
+    const configSkipEndStartSec = document.getElementById('config-skip-end-start-sec');
+    const configSkipEndEndMin = document.getElementById('config-skip-end-end-min');
+    const configSkipEndEndSec = document.getElementById('config-skip-end-end-sec');
     const configCustomSkipStartMin = document.getElementById('config-custom-skip-start-min');
     const configCustomSkipStartSec = document.getElementById('config-custom-skip-start-sec');
     const configCustomSkipEndMin = document.getElementById('config-custom-skip-end-min');
@@ -435,31 +437,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const duration = clipcutVideoInfo.duration;
         const skipStart = (parseInt(configSkipStartMin.value) || 0) * 60 + (parseInt(configSkipStartSec.value) || 0);
-        const skipEnd = (parseInt(configSkipEndMin.value) || 0) * 60 + (parseInt(configSkipEndSec.value) || 0);
+        const skipEndStart = (parseInt(configSkipEndStartMin.value) || 0) * 60 + (parseInt(configSkipEndStartSec.value) || 0);
+        const skipEndEnd = (parseInt(configSkipEndEndMin.value) || 0) * 60 + (parseInt(configSkipEndEndSec.value) || 0);
         const customSkipStart = (parseInt(configCustomSkipStartMin.value) || 0) * 60 + (parseInt(configCustomSkipStartSec.value) || 0);
         const customSkipEnd = (parseInt(configCustomSkipEndMin.value) || 0) * 60 + (parseInt(configCustomSkipEndSec.value) || 0);
         const clipLen = parseInt(configClipLength.value) || 60;
         const aspect = configAspectRatio.value;
 
+        function subtractInterval(intervals, x, y) {
+            let newIntervals = [];
+            for (let [start, end] of intervals) {
+                if (y <= start || x >= end) {
+                    newIntervals.push([start, end]);
+                } else {
+                    if (x > start) {
+                        newIntervals.push([start, x]);
+                    }
+                    if (y < end) {
+                        newIntervals.push([y, end]);
+                    }
+                }
+            }
+            return newIntervals;
+        }
+
         // Calculate intervals
-        const effectiveStart = skipStart;
-        const effectiveEnd = duration - skipEnd;
+        let playableIntervals = [];
+        if (duration > skipStart) {
+            playableIntervals.push([skipStart, duration]);
+        }
+
+        // Subtract Custom Skip
+        if (customSkipStart > 0 && customSkipEnd > customSkipStart) {
+            playableIntervals = subtractInterval(playableIntervals, customSkipStart, customSkipEnd);
+        }
+
+        // Subtract Outro Skip
+        if (skipEndStart > 0 && skipEndEnd > skipEndStart) {
+            playableIntervals = subtractInterval(playableIntervals, skipEndStart, skipEndEnd);
+        }
 
         let numClips = 0;
-        if (customSkipStart > 0 && customSkipEnd > customSkipStart) {
-            // First region
-            if (customSkipStart > effectiveStart) {
-                const dur1 = Math.min(effectiveEnd, customSkipStart) - effectiveStart;
-                if (dur1 > 0) numClips += Math.ceil(dur1 / clipLen);
+        for (let [start, end] of playableIntervals) {
+            if (end > start) {
+                numClips += Math.ceil((end - start) / clipLen);
             }
-            // Second region
-            if (customSkipEnd < effectiveEnd) {
-                const dur2 = effectiveEnd - Math.max(effectiveStart, customSkipEnd);
-                if (dur2 > 0) numClips += Math.ceil(dur2 / clipLen);
-            }
-        } else {
-            const effectiveDuration = Math.max(0, effectiveEnd - effectiveStart);
-            numClips = Math.ceil(effectiveDuration / clipLen);
         }
 
         summaryClipsCount.textContent = `${numClips} clips`;
@@ -475,7 +497,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Attach recalculation event listeners
     [configClipLength, configAspectRatio, configClipQuality, 
      configSkipStartMin, configSkipStartSec, 
-     configSkipEndMin, configSkipEndSec, 
+     configSkipEndStartMin, configSkipEndStartSec, 
+     configSkipEndEndMin, configSkipEndEndSec, 
      configCustomSkipStartMin, configCustomSkipStartSec, 
      configCustomSkipEndMin, configCustomSkipEndSec].forEach(el => {
         el.addEventListener('change', recalculateEstimations);
@@ -496,7 +519,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const aspect = configAspectRatio.value;
         const quality = configClipQuality.value;
         const skipStart = (parseInt(configSkipStartMin.value) || 0) * 60 + (parseInt(configSkipStartSec.value) || 0);
-        const skipEnd = (parseInt(configSkipEndMin.value) || 0) * 60 + (parseInt(configSkipEndSec.value) || 0);
+        const skipEndStart = (parseInt(configSkipEndStartMin.value) || 0) * 60 + (parseInt(configSkipEndStartSec.value) || 0);
+        const skipEndEnd = (parseInt(configSkipEndEndMin.value) || 0) * 60 + (parseInt(configSkipEndEndSec.value) || 0);
         const customSkipStart = (parseInt(configCustomSkipStartMin.value) || 0) * 60 + (parseInt(configCustomSkipStartSec.value) || 0);
         const customSkipEnd = (parseInt(configCustomSkipEndMin.value) || 0) * 60 + (parseInt(configCustomSkipEndSec.value) || 0);
 
@@ -519,7 +543,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     crop_9_16: aspect === 'crop_9_16',
                     quality: quality,
                     skip_start: skipStart,
-                    skip_end: skipEnd,
+                    skip_end_start: skipEndStart,
+                    skip_end_end: skipEndEnd,
                     custom_skip_start: customSkipStart,
                     custom_skip_end: customSkipEnd,
                     duration: clipcutVideoInfo.duration

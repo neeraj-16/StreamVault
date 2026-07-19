@@ -198,43 +198,55 @@
                                 </select>
                             </div>
                             
+                        </div>
+
+                        <!-- Skips & Trims Section (Forces separate lines for skips) -->
+                        <div class="skips-section">
+                            <h3 class="skips-title">Video Skips & Trims</h3>
+
                             <!-- Skip Intro (Min & Sec) -->
-                            <div class="config-item">
-                                <label>Skip Intro (Min : Sec)</label>
-                                <div class="time-input-row">
+                            <div class="config-item skip-row-item">
+                                <label>Skip Intro (From 00:00 up to...)</label>
+                                <div class="time-input-row flex-start">
                                     <input type="number" id="config-skip-start-min" class="config-input min-input" min="0" value="0" placeholder="Min">
                                     <span class="time-sep">:</span>
                                     <input type="number" id="config-skip-start-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
                                 </div>
                             </div>
                             
-                            <!-- Skip Outro (Min & Sec) -->
-                            <div class="config-item">
-                                <label>Skip Outro (Min : Sec)</label>
-                                <div class="time-input-row">
-                                    <input type="number" id="config-skip-end-min" class="config-input min-input" min="0" value="0" placeholder="Min">
-                                    <span class="time-sep">:</span>
-                                    <input type="number" id="config-skip-end-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                            <!-- Skip Outro (Start Min:Sec to End Min:Sec) -->
+                            <div class="config-item skip-row-item">
+                                <label>Skip Outro (Segment to remove, e.g. 10:28 to 10:54)</label>
+                                <div class="time-input-row-group">
+                                    <div class="time-input-row">
+                                        <input type="number" id="config-skip-end-start-min" class="config-input min-input" min="0" value="0" placeholder="Min">
+                                        <span class="time-sep">:</span>
+                                        <input type="number" id="config-skip-end-start-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                                    </div>
+                                    <span class="range-sep">to</span>
+                                    <div class="time-input-row">
+                                        <input type="number" id="config-skip-end-end-min" class="config-input min-input" min="0" value="0" placeholder="Min">
+                                        <span class="time-sep">:</span>
+                                        <input type="number" id="config-skip-end-end-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                                    </div>
                                 </div>
                             </div>
                             
-                            <!-- Custom Skip Segment (Start) -->
-                            <div class="config-item">
-                                <label>Custom Skip Start (Min : Sec)</label>
-                                <div class="time-input-row">
-                                    <input type="number" id="config-custom-skip-start-min" class="config-input min-input" min="0" value="0" placeholder="Min">
-                                    <span class="time-sep">:</span>
-                                    <input type="number" id="config-custom-skip-start-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
-                                </div>
-                            </div>
-                            
-                            <!-- Custom Skip Segment (End) -->
-                            <div class="config-item">
-                                <label>Custom Skip End (Min : Sec)</label>
-                                <div class="time-input-row">
-                                    <input type="number" id="config-custom-skip-end-min" class="config-input min-input" min="0" value="0" placeholder="Min">
-                                    <span class="time-sep">:</span>
-                                    <input type="number" id="config-custom-skip-end-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                            <!-- Custom Skip (Start Min:Sec to End Min:Sec) -->
+                            <div class="config-item skip-row-item">
+                                <label>Custom Skip (Middle segment to remove, e.g. 02:30 to 03:00)</label>
+                                <div class="time-input-row-group">
+                                    <div class="time-input-row">
+                                        <input type="number" id="config-custom-skip-start-min" class="config-input min-input" min="0" value="0" placeholder="Min">
+                                        <span class="time-sep">:</span>
+                                        <input type="number" id="config-custom-skip-start-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                                    </div>
+                                    <span class="range-sep">to</span>
+                                    <div class="time-input-row">
+                                        <input type="number" id="config-custom-skip-end-min" class="config-input min-input" min="0" value="0" placeholder="Min">
+                                        <span class="time-sep">:</span>
+                                        <input type="number" id="config-custom-skip-end-sec" class="config-input sec-input" min="0" max="59" value="0" placeholder="Sec">
+                                    </div>
                                 </div>
                             </div>
                         </div>

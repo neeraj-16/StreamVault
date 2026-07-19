@@ -937,3 +937,49 @@ body {
     font-weight: 700;
     font-size: 1.1rem;
 }
+
+/* Skips & Trims Section */
+.skips-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    grid-column: 1 / -1;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 25px;
+    margin-top: 15px;
+}
+.skips-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+    margin-bottom: 5px;
+}
+.skip-row-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+.skip-row-item label {
+    margin-bottom: 0;
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+.time-input-row.flex-start {
+    max-width: 200px;
+}
+.time-input-row-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    max-width: 420px;
+    width: 100%;
+}
+.range-sep {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

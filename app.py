@@ -453,7 +453,7 @@ def serve_file(filename):
 
 # --- ClipCut Endpoints and Task Worker ---
 
-def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration, quality='best', custom_skip_start=0, custom_skip_end=0):
+def run_clipcut_task(url, clip_length, crop_9_16, skip_start, job_id, duration, quality='best', custom_skip_start=0, custom_skip_end=0, skip_end_start=0, skip_end_end=0):
     job_dir = os.path.join(CLIPCUT_DIR, job_id)
     os.makedirs(job_dir, exist_ok=True)
     
@@ -548,20 +548,29 @@ def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, 
             raise Exception("Downloaded video could not be found.")
             
         # Calculate segments
-        effective_start = skip_start
-        effective_end = duration - skip_end
-        
         playable_intervals = []
+        if duration > skip_start:
+            playable_intervals.append((skip_start, duration))
+            
+        def subtract_interval(intervals, x, y):
+            new_intervals = []
+            for start, end in intervals:
+                if y <= start or x >= end:
+                    new_intervals.append((start, end))
+                else:
+                    if x > start:
+                        new_intervals.append((start, x))
+                    if y < end:
+                        new_intervals.append((y, end))
+            return new_intervals
+            
+        # Subtract Custom Skip
         if custom_skip_start > 0 and custom_skip_end > custom_skip_start:
-            # First sub-segment: before custom skip
-            if custom_skip_start > effective_start:
-                playable_intervals.append((effective_start, min(effective_end, custom_skip_start)))
-            # Second sub-segment: after custom skip
-            if custom_skip_end < effective_end:
-                playable_intervals.append((max(effective_start, custom_skip_end), effective_end))
-        else:
-            if effective_end > effective_start:
-                playable_intervals.append((effective_start, effective_end))
+            playable_intervals = subtract_interval(playable_intervals, custom_skip_start, custom_skip_end)
+            
+        # Subtract Outro Skip
+        if skip_end_start > 0 and skip_end_end > skip_end_start:
+            playable_intervals = subtract_interval(playable_intervals, skip_end_start, skip_end_end)
                 
         import math
         segments = []
@@ -726,7 +735,8 @@ def clipcut_process():
     clip_length = int(data.get('clip_length', 60))
     crop_9_16 = bool(data.get('crop_9_16', False))
     skip_start = int(data.get('skip_start', 0))
-    skip_end = int(data.get('skip_end', 0))
+    skip_end_start = int(data.get('skip_end_start', 0))
+    skip_end_end = int(data.get('skip_end_end', 0))
     custom_skip_start = int(data.get('custom_skip_start', 0))
     custom_skip_end = int(data.get('custom_skip_end', 0))
     duration = int(data.get('duration', 0))
@@ -740,7 +750,7 @@ def clipcut_process():
     # Start thread
     thread = threading.Thread(
         target=run_clipcut_task,
-        args=(url, clip_length, crop_9_16, skip_start, skip_end, job_id, duration, quality, custom_skip_start, custom_skip_end)
+        args=(url, clip_length, crop_9_16, skip_start, job_id, duration, quality, custom_skip_start, custom_skip_end, skip_end_start, skip_end_end)
     )
     thread.daemon = True
     thread.start()

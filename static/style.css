@@ -983,3 +983,78 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
+/* Video Preview Modal overlay customizations */
+.preview-modal-content {
+    max-width: 800px;
+    width: 90%;
+    padding: 24px;
+}
+.btn-close-modal-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 2.2rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: var(--transition-smooth);
+    padding: 0 4px;
+}
+.btn-close-modal-icon:hover {
+    color: var(--text-primary);
+}
+.video-preview-wrapper {
+    width: 100%;
+    margin-top: 15px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--border-glass);
+}
+.preview-video-player {
+    max-height: 65vh;
+    max-width: 100%;
+    outline: none;
+}
+
+/* Side-by-side clip actions row styles */
+.clip-actions-row {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    width: 100%;
+}
+.btn-preview-clip {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: var(--transition-smooth);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+}
+.btn-preview-clip:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.clip-card-body .btn-download-clip {
+    flex: 1;
+    margin-top: 0;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    color: white;
+    border-color: transparent;
+}
+.clip-card-body .btn-download-clip:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 4px 12px rgba(155, 93, 229, 0.2);
+}

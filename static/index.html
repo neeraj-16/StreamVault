@@ -368,6 +368,25 @@
         </div>
     </div>
 
+    <!-- Video Preview Modal (Overlay) -->
+    <div id="preview-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-content preview-modal-content">
+            <div class="modal-header">
+                <div class="modal-title-wrapper">
+                    <i class="fa-solid fa-film progress-spinner" style="animation: none;"></i>
+                    <h3 id="preview-modal-title">Preview Clip</h3>
+                </div>
+                <button id="btn-close-preview" class="btn-close-modal-icon">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="video-preview-wrapper">
+                    <video id="preview-video" controls class="preview-video-player"></video>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom JS -->
     <script src="/static/app.js"></script>
 </body>

@@ -365,6 +365,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let clipcutJobId = null;
     let clipcutPollInterval = null;
 
+    // Video Preview Modal selectors
+    const previewModal = document.getElementById('preview-modal');
+    const previewModalTitle = document.getElementById('preview-modal-title');
+    const previewVideo = document.getElementById('preview-video');
+    const btnClosePreview = document.getElementById('btn-close-preview');
+
     // Fetch Details for ClipCut
     clipcutUrlForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -524,6 +530,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const customSkipStart = (parseInt(configCustomSkipStartMin.value) || 0) * 60 + (parseInt(configCustomSkipStartSec.value) || 0);
         const customSkipEnd = (parseInt(configCustomSkipEndMin.value) || 0) * 60 + (parseInt(configCustomSkipEndSec.value) || 0);
 
+        // Clear all skip input values for next round
+        configSkipStartMin.value = '';
+        configSkipStartSec.value = '';
+        configSkipEndStartMin.value = '';
+        configSkipEndStartSec.value = '';
+        configSkipEndEndMin.value = '';
+        configSkipEndEndSec.value = '';
+        configCustomSkipStartMin.value = '';
+        configCustomSkipStartSec.value = '';
+        configCustomSkipEndMin.value = '';
+        configCustomSkipEndSec.value = '';
+
         // Hide config and show progress views
         clipcutConfigPanel.classList.add('hidden');
         
@@ -623,13 +641,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="clip-card-title">Clip #${clip.clip_index}</span>
                         <span class="clip-card-size">MP4 &bull; ${clip.size_str}</span>
                     </div>
-                    <button class="btn-download-clip" data-href="${clipUrl}" data-name="Short_Clip_${clip.clip_index}.mp4">
-                        <span>Download</span>
-                        <i class="fa-solid fa-download"></i>
-                    </button>
+                    <div class="clip-actions-row">
+                        <button class="btn-preview-clip" data-href="${clipUrl}" data-title="Clip #${clip.clip_index}">
+                            <span>Preview</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button class="btn-download-clip" data-href="${clipUrl}" data-name="Short_Clip_${clip.clip_index}.mp4">
+                            <span>Download</span>
+                            <i class="fa-solid fa-download"></i>
+                        </button>
+                    </div>
                 </div>
             `;
 
+            // Download Trigger
             card.querySelector('.btn-download-clip').addEventListener('click', (e) => {
                 const button = e.currentTarget;
                 const link = document.createElement('a');
@@ -640,8 +665,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.removeChild(link);
             });
 
+            // Preview Modal Trigger
+            card.querySelector('.btn-preview-clip').addEventListener('click', (e) => {
+                const button = e.currentTarget;
+                const videoUrl = button.getAttribute('data-href');
+                const title = button.getAttribute('data-title');
+                
+                previewModalTitle.textContent = `Preview - ${title}`;
+                previewVideo.src = videoUrl;
+                previewModal.classList.remove('hidden');
+                previewVideo.play().catch(err => console.log("Autoplay blocked:", err));
+            });
+
             clipsGrid.appendChild(card);
         });
+
+        // Close Preview Modal event listeners
+        btnClosePreview.onclick = () => {
+            previewModal.classList.add('hidden');
+            previewVideo.pause();
+            previewVideo.src = '';
+        };
+
+        previewModal.onclick = (e) => {
+            if (e.target === previewModal) {
+                previewModal.classList.add('hidden');
+                previewVideo.pause();
+                previewVideo.src = '';
+            }
+        };
 
         // Set ZIP download action
         btnDownloadZip.onclick = () => {

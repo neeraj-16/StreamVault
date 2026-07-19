@@ -120,7 +120,7 @@ def fix_cookies_format(path):
     Copy-pasting cookies into text fields often converts tabs to spaces, which breaks yt-dlp.
     """
     try:
-        if not os.path.exists(path):
+        if not os.path.exists(path) or not os.path.isfile(path):
             return
         
         size = os.path.getsize(path)
@@ -176,7 +176,7 @@ def run_yt_dlp_json(url):
     ]
     cookies_found = False
     for path in cookies_paths:
-        if os.path.exists(path):
+        if os.path.exists(path) and os.path.isfile(path):
             fix_cookies_format(path)
             print(f"DEBUG: Found cookies at {path}", flush=True)
             cmd.extend(['--cookies', path])
@@ -244,7 +244,7 @@ def download_video_task(url, height, download_id):
     ]
     cookies_found = False
     for path in cookies_paths:
-        if os.path.exists(path):
+        if os.path.exists(path) and os.path.isfile(path):
             fix_cookies_format(path)
             print(f"DEBUG: Found cookies at {path} for download", flush=True)
             cmd.extend(['--cookies', path])
@@ -493,7 +493,7 @@ def run_clipcut_task(url, clip_length, crop_9_16, skip_start, skip_end, job_id, 
         '/etc/secrets/cookies.txt'
     ]
     for path in cookies_paths:
-        if os.path.exists(path):
+        if os.path.exists(path) and os.path.isfile(path):
             fix_cookies_format(path)
             cmd.extend(['--cookies', path])
             break

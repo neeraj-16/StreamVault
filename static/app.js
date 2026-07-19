@@ -7,8 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleApiResponse(response, defaultErrorMsg) {
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") !== -1) {
+            let data;
             try {
-                const data = await response.json();
+                data = await response.json();
                 if (!response.ok || data.error) {
                     throw new Error(data.error || defaultErrorMsg);
                 }

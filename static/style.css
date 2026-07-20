@@ -638,8 +638,12 @@ body {
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
+    .app-container {
+        padding: 20px 10px;
+    }
     .glass-panel {
-        padding: 25px;
+        padding: 20px 15px;
+        border-radius: 16px;
     }
     .video-preview-header {
         flex-direction: column;
@@ -657,6 +661,35 @@ body {
         flex-direction: column;
     }
     .btn-primary {
+        width: 100%;
+    }
+    
+    /* Responsive skips and trims inputs */
+    .time-input-row-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
+    }
+    .range-sep {
+        align-self: center;
+        margin: 2px 0;
+    }
+    .time-input-row input {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+    .time-input-row.flex-start {
+        max-width: 100%;
+    }
+    
+    /* Results header and ZIP download layout */
+    .results-header-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .btn-zip-download {
         width: 100%;
     }
 }

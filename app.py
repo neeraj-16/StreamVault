@@ -604,33 +604,30 @@ def run_clipcut_task(url, clip_length, crop_9_16, skip_start, job_id, duration, 
                 'progress': int((i / num_segments) * 100)
             })
             
-            # Crop vs Stream Copy (re-encoding both to force smooth 60 FPS)
+            # Crop vs Stream Copy (optimized for speed)
             if crop_9_16:
-                # Center crop to 9:16 vertical (forcing dimensions divisible by 2) and force 60 FPS
+                # Center crop to 9:16 vertical and use ultrafast preset for speed
                 ffmpeg_cmd = [
                     FFMPEG_EXE, '-y',
                     '-ss', str(segment_start_time),
                     '-i', full_video_path,
                     '-t', str(segment_duration),
-                    '-vf', 'crop=2*trunc(ih*9/32):2*trunc(ih/2),fps=fps=60',
+                    '-vf', 'crop=2*trunc(ih*9/32):2*trunc(ih/2)',
                     '-c:v', 'libx264',
-                    '-preset', 'superfast',
+                    '-preset', 'ultrafast',
                     '-crf', '23',
                     '-c:a', 'aac',
+                    '-threads', '0',
                     output_clip_path
                 ]
             else:
-                # Re-encode to force smooth 60 FPS
+                # Stream copy (instantaneous, takes < 1 second, preserves original quality/FPS)
                 ffmpeg_cmd = [
                     FFMPEG_EXE, '-y',
                     '-ss', str(segment_start_time),
                     '-i', full_video_path,
                     '-t', str(segment_duration),
-                    '-vf', 'fps=fps=60',
-                    '-c:v', 'libx264',
-                    '-preset', 'superfast',
-                    '-crf', '23',
-                    '-c:a', 'aac',
+                    '-c', 'copy',
                     output_clip_path
                 ]
                 

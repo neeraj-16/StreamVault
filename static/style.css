@@ -1058,3 +1058,31 @@ body {
     filter: brightness(1.1);
     box-shadow: 0 4px 12px rgba(155, 93, 229, 0.2);
 }
+
+/* Local Routing Tip Banner */
+.local-tip-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    animation: slideUp 0.3s ease-out;
+}
+.local-tip-banner a {
+    color: #a78bfa;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.local-tip-banner a:hover {
+    color: #c084fc;
+    text-decoration: underline;
+}
+.local-tip-banner i {
+    color: #a78bfa;
+    font-size: 1.1rem;
+}

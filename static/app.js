@@ -639,6 +639,20 @@ document.addEventListener('DOMContentLoaded', () => {
         clipcutProcessPanel.classList.add('hidden');
         clipsGrid.innerHTML = '';
 
+        // Show local routing tip if using Cloudflare tunnel on local machine
+        if (window.location.hostname.includes('trycloudflare.com')) {
+            const existingTip = document.querySelector('.local-tip-banner');
+            if (existingTip) existingTip.remove();
+
+            const localTip = document.createElement('div');
+            localTip.className = 'local-tip-banner';
+            localTip.innerHTML = `
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Are you running this on this Mac? Use <a href="http://127.0.0.1:5000" target="_blank"><b>http://127.0.0.1:5000</b></a> for <b>instant</b> 0-second local downloads!</span>
+            `;
+            clipsGrid.parentNode.insertBefore(localTip, clipsGrid);
+        }
+
         const aspect = configAspectRatio.value;
         const isCropped = aspect === 'crop_9_16';
 

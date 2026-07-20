@@ -776,7 +776,10 @@ def serve_clipcut_file(job_id, filename):
         return jsonify({'error': 'Invalid file request'}), 400
         
     job_dir = os.path.join(CLIPCUT_DIR, job_id)
-    return send_from_directory(job_dir, filename, as_attachment=filename.endswith('.mp4'))
+    response = send_from_directory(job_dir, filename, as_attachment=filename.endswith('.mp4'))
+    # Cache clips and thumbnails for 24 hours to prevent duplicate data consumption on preview/download
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 @app.route('/api/clipcut/download-zip/<job_id>')
 def serve_clipcut_zip(job_id):

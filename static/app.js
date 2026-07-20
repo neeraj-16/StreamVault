@@ -371,22 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewVideo = document.getElementById('preview-video');
     const btnClosePreview = document.getElementById('btn-close-preview');
 
-    // Blob cache for saving mobile data
-    const clipBlobCache = {};
-
-    async function getClipObjectURL(clipUrl) {
-        if (clipBlobCache[clipUrl]) {
-            return clipBlobCache[clipUrl];
-        }
-        const response = await fetch(clipUrl);
-        if (!response.ok) {
-            throw new Error("Failed to fetch clip data from server.");
-        }
-        const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        clipBlobCache[clipUrl] = objectUrl;
-        return objectUrl;
-    }
 
     // Fetch Details for ClipCut
     clipcutUrlForm.addEventListener('submit', async (e) => {
@@ -671,58 +655,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            // Download Trigger (using blob cache to save mobile data)
-            card.querySelector('.btn-download-clip').addEventListener('click', async (e) => {
+            // Download Trigger
+            card.querySelector('.btn-download-clip').addEventListener('click', (e) => {
                 const button = e.currentTarget;
-                const icon = button.querySelector('i');
-                const span = button.querySelector('span');
-                const originalText = span.textContent;
-
-                button.disabled = true;
-                span.textContent = "Loading...";
-                icon.className = "fa-solid fa-circle-notch fa-spin";
-
-                try {
-                    const objectUrl = await getClipObjectURL(clipUrl);
-                    const link = document.createElement('a');
-                    link.href = objectUrl;
-                    link.download = button.getAttribute('data-name');
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } catch (err) {
-                    alert(err.message);
-                } finally {
-                    button.disabled = false;
-                    span.textContent = originalText;
-                    icon.className = "fa-solid fa-download";
-                }
+                const link = document.createElement('a');
+                link.href = button.getAttribute('data-href');
+                link.download = button.getAttribute('data-name');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             });
 
-            // Preview Modal Trigger (using blob cache to save mobile data)
-            card.querySelector('.btn-preview-clip').addEventListener('click', async (e) => {
+            // Preview Modal Trigger
+            card.querySelector('.btn-preview-clip').addEventListener('click', (e) => {
                 const button = e.currentTarget;
-                const icon = button.querySelector('i');
-                const span = button.querySelector('span');
-                const originalText = span.textContent;
+                const videoUrl = button.getAttribute('data-href');
+                const title = button.getAttribute('data-title');
 
-                button.disabled = true;
-                span.textContent = "Loading...";
-                icon.className = "fa-solid fa-circle-notch fa-spin";
-
-                try {
-                    const objectUrl = await getClipObjectURL(clipUrl);
-                    previewModalTitle.textContent = `Preview - ${button.getAttribute('data-title')}`;
-                    previewVideo.src = objectUrl;
-                    previewModal.classList.remove('hidden');
-                    previewVideo.play().catch(err => console.log("Autoplay blocked:", err));
-                } catch (err) {
-                    alert(err.message);
-                } finally {
-                    button.disabled = false;
-                    span.textContent = originalText;
-                    icon.className = "fa-solid fa-play";
-                }
+                previewModalTitle.textContent = `Preview - ${title}`;
+                previewVideo.src = videoUrl;
+                previewModal.classList.remove('hidden');
+                previewVideo.play().catch(err => console.log("Autoplay blocked:", err));
             });
 
             clipsGrid.appendChild(card);

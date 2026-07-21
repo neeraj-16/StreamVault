@@ -39,6 +39,9 @@
             <button id="tab-clipcut" class="nav-tab">
                 <i class="fa-solid fa-scissors"></i> ClipCut Shorts
             </button>
+            <button id="tab-localcut" class="nav-tab">
+                <i class="fa-solid fa-file-video"></i> LocalCut
+            </button>
         </nav>
 
         <!-- Search Section -->
@@ -306,6 +309,190 @@
                     </div>
                     
                     <div id="clips-grid" class="clips-grid">
+                        <!-- Clips cards will be loaded dynamically here -->
+                    </div>
+            </div>
+
+            <!-- LocalCut Tab Content -->
+            <div id="localcut-content" class="tab-content hidden">
+                <!-- File Upload Panel -->
+                <div class="glass-panel search-panel">
+                    <h1 class="panel-title">Local Video Cutter</h1>
+                    <p class="panel-subtitle">Upload a video file from your device to split and crop it into shorts instantly</p>
+                    
+                    <div id="localcut-upload-zone" class="upload-zone">
+                        <i class="fa-solid fa-file-video upload-icon" style="font-size: 2.8rem; color: var(--accent-purple); margin-bottom: 12px; display: block;"></i>
+                        <p class="upload-text">Drag & drop your video file here, or <span class="browse-btn">browse files</span></p>
+                        <input type="file" id="localcut-file-input" accept="video/*" style="display: none;">
+                        <p class="file-info hidden" id="localcut-file-name" style="margin-top: 10px; font-weight: 600; color: var(--accent-cyan);"></p>
+                    </div>
+
+                    <!-- Upload Progress Area -->
+                    <div id="localcut-upload-progress" class="upload-progress-container hidden" style="margin-top: 20px; text-align: left;">
+                        <div class="progress-bar-container">
+                            <div id="localcut-upload-fill" class="progress-bar-fill" style="width: 0%"></div>
+                        </div>
+                        <p id="localcut-upload-status" class="status-text" style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">Uploading: 0%</p>
+                    </div>
+
+                    <button type="button" id="btn-localcut-upload-submit" class="btn-primary" style="margin-top: 20px; width: 100%;" disabled>
+                        <span class="btn-text">Upload & Analyze Video</span>
+                        <i class="fa-solid fa-cloud-arrow-up btn-icon"></i>
+                    </button>
+                    
+                    <div id="localcut-error-message" class="error-box hidden">
+                        <i class="fa-solid fa-triangle-exclamation error-icon"></i>
+                        <span id="localcut-error-text">An error occurred</span>
+                    </div>
+                </div>
+
+                <!-- LocalCut Configuration Panel (Hidden Initially) -->
+                <div id="localcut-config-panel" class="glass-panel config-panel hidden" style="margin-top: 30px;">
+                    <div class="video-preview-header">
+                        <div class="thumbnail-wrapper" style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid var(--border-glass);">
+                            <i class="fa-solid fa-file-video" style="font-size: 4rem; color: var(--accent-purple);"></i>
+                        </div>
+                        <div class="video-meta">
+                            <h2 id="localcut-video-title" class="video-title">Local Video File</h2>
+                            <p id="localcut-video-resolution" class="video-channel"><i class="fa-solid fa-display icon-channel"></i> Resolution: Unknown</p>
+                            <p id="localcut-video-duration-display" class="video-channel" style="color: var(--accent-cyan); font-weight: 700; margin-top: 4px;"><i class="fa-solid fa-clock icon-channel"></i> Duration: --:--</p>
+                        </div>
+                    </div>
+
+                    <div class="config-sections">
+                        <div class="config-section-title">
+                            <h3><i class="fa-solid fa-circle-info"></i> Configure Shorts Grid</h3>
+                            <p>Choose clip durations, cropping rules, and skip buffer times.</p>
+                        </div>
+
+                        <div class="config-grid">
+                            <!-- Clip Duration Selector -->
+                            <div class="config-item">
+                                <label for="localcut-clip-length">Clip Duration</label>
+                                <select id="localcut-clip-length" class="config-select">
+                                    <option value="60" selected>60 Seconds (Standard Short)</option>
+                                    <option value="30">30 Seconds (Quick Short)</option>
+                                    <option value="15">15 Seconds (Micro Short)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Aspect Ratio Selector -->
+                            <div class="config-item">
+                                <label for="localcut-aspect-ratio">Aspect Ratio</label>
+                                <select id="localcut-aspect-ratio" class="config-select">
+                                    <option value="original">Keep Original Aspect Ratio</option>
+                                    <option value="crop_9_16" selected>Crop to 9:16 Vertical Shorts (Center-Cut)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Skips & Trims Section -->
+                        <div class="skips-section">
+                            <h3 class="skips-title">Video Skips & Trims</h3>
+
+                            <!-- Skip Intro (Min & Sec) -->
+                            <div class="config-item skip-row-item">
+                                <label>Skip Intro (From 00:00 up to...)</label>
+                                <div class="time-input-row flex-start">
+                                    <input type="number" id="localcut-skip-start-min" class="config-input min-input" min="0" placeholder="Min">
+                                    <span class="time-sep">:</span>
+                                    <input type="number" id="localcut-skip-start-sec" class="config-input sec-input" min="0" max="59" placeholder="Sec">
+                                </div>
+                            </div>
+                            
+                            <!-- Skip Outro (Start Min:Sec to End Min:Sec) -->
+                            <div class="config-item skip-row-item">
+                                <label>Skip Outro (Segment to remove, e.g. 10:28 to 10:54)</label>
+                                <div class="time-input-row-group">
+                                    <div class="time-input-row">
+                                        <input type="number" id="localcut-skip-end-start-min" class="config-input min-input" min="0" placeholder="Min">
+                                        <span class="time-sep">:</span>
+                                        <input type="number" id="localcut-skip-end-start-sec" class="config-input sec-input" min="0" max="59" placeholder="Sec">
+                                    </div>
+                                    <span class="range-sep">to</span>
+                                    <div class="time-input-row">
+                                        <input type="number" id="localcut-skip-end-end-min" class="config-input min-input" min="0" placeholder="Min">
+                                        <span class="time-sep">:</span>
+                                        <input type="number" id="localcut-skip-end-end-sec" class="config-input sec-input" min="0" max="59" placeholder="Sec">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Custom Skip (Start Min:Sec to End Min:Sec) -->
+                            <div class="config-item skip-row-item">
+                                <label>Custom Skip (Middle segment to remove, e.g. 02:30 to 03:00)</label>
+                                <div class="time-input-row-group">
+                                    <div class="time-input-row">
+                                        <input type="number" id="localcut-custom-skip-start-min" class="config-input min-input" min="0" placeholder="Min">
+                                        <span class="time-sep">:</span>
+                                        <input type="number" id="localcut-custom-skip-start-sec" class="config-input sec-input" min="0" max="59" placeholder="Sec">
+                                    </div>
+                                    <span class="range-sep">to</span>
+                                    <div class="time-input-row">
+                                        <input type="number" id="localcut-custom-skip-end-min" class="config-input min-input" min="0" placeholder="Min">
+                                        <span class="time-sep">:</span>
+                                        <input type="number" id="localcut-custom-skip-end-sec" class="config-input sec-input" min="0" max="59" placeholder="Sec">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Info details before processing -->
+                        <div class="summary-box">
+                            <div class="summary-row">
+                                <span>Expected Clip Output:</span>
+                                <span id="localcut-summary-clips-count" class="summary-val">0 clips</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Estimated Processing Time:</span>
+                                <span id="localcut-summary-time" class="summary-val">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Generate Action Button -->
+                        <div class="action-wrapper">
+                            <button id="btn-localcut-generate" class="btn-primary btn-generate">
+                                <span class="btn-text">Generate Clips</span>
+                                <i class="fa-solid fa-scissors btn-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LocalCut Processing Panel (Hidden Initially) -->
+                <div id="localcut-process-panel" class="glass-panel result-panel hidden" style="margin-top: 30px;">
+                    <div class="modal-title-wrapper">
+                        <i class="fa-solid fa-circle-notch fa-spin progress-spinner"></i>
+                        <h3 id="localcut-process-status-title">Processing Video Segments</h3>
+                    </div>
+                    <p id="localcut-process-status-text" class="status-text">Analyzing uploaded video file...</p>
+                    
+                    <div class="progress-bar-container">
+                        <div id="localcut-process-progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+                    </div>
+                    
+                    <div class="progress-stats">
+                        <div class="stat-item" style="grid-column: 1 / -1;">
+                            <span class="stat-label">Current Task</span>
+                            <span id="localcut-process-task-log" class="stat-value">Splitting video stream...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LocalCut Results Panel (Hidden Initially) -->
+                <div id="localcut-results-panel" class="glass-panel result-panel hidden" style="margin-top: 30px;">
+                    <div class="results-header-actions">
+                        <div class="results-title-meta">
+                            <h3 class="section-title"><i class="fa-solid fa-film"></i> Generated Shorts</h3>
+                            <p class="section-subtitle">Your vertical clips have been processed successfully. Download below:</p>
+                        </div>
+                        <button id="btn-localcut-download-zip" class="btn-primary btn-zip-download">
+                            <span>Download All as ZIP</span>
+                            <i class="fa-solid fa-file-zipper"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="localcut-clips-grid" class="clips-grid">
                         <!-- Clips cards will be loaded dynamically here -->
                     </div>
                 </div>

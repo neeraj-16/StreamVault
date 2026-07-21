@@ -15,8 +15,10 @@ app = Flask(__name__)
 # Directories
 DOWNLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'downloads')
 CLIPCUT_DIR = os.path.join(DOWNLOAD_DIR, 'clipcut')
+LOCALCUT_DIR = os.path.join(DOWNLOAD_DIR, 'localcut')
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(CLIPCUT_DIR, exist_ok=True)
+os.makedirs(LOCALCUT_DIR, exist_ok=True)
 
 BIN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin')
 import shutil
@@ -27,11 +29,13 @@ if sys.platform == 'darwin' and os.path.exists(os.path.join(BIN_DIR, 'yt-dlp')):
 else:
     YT_DLP_BIN = shutil.which('yt-dlp') or 'yt-dlp'
 
+# Make sure imageio_ffmpeg is configured
 FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
 
 # Global status dictionary
 download_status = {}
 clipcut_jobs = {}
+localcut_jobs = {}
 
 # Regex for parsing yt-dlp progress
 progress_regex = re.compile(
@@ -84,7 +88,7 @@ def cleanup_old_files():
             # 1. Clean regular downloads
             if os.path.exists(DOWNLOAD_DIR):
                 for f in os.listdir(DOWNLOAD_DIR):
-                    if f == 'clipcut':
+                    if f in ('clipcut', 'localcut'):
                         continue
                     file_path = os.path.join(DOWNLOAD_DIR, f)
                     if os.path.isfile(file_path):
@@ -108,6 +112,18 @@ def cleanup_old_files():
                             except Exception:
                                 pass
                             clipcut_jobs.pop(d, None)
+
+            # 3. Clean localcut folders (1 hour = 3600 seconds)
+            if os.path.exists(LOCALCUT_DIR):
+                for d in os.listdir(LOCALCUT_DIR):
+                    dir_path = os.path.join(LOCALCUT_DIR, d)
+                    if os.path.isdir(dir_path):
+                        if now - os.path.getmtime(dir_path) > 3600:
+                            try:
+                                shutil.rmtree(dir_path)
+                            except Exception:
+                                pass
+                            localcut_jobs.pop(d, None)
         except Exception as e:
             print(f"Error in cleanup thread: {e}")
         time.sleep(60)
@@ -796,6 +812,297 @@ def serve_clipcut_zip(job_id):
     zip_path = os.path.join(job_dir, zip_filename)
     
     # Generate ZIP if it doesn't exist
+    if not os.path.exists(zip_path):
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            for f in sorted(os.listdir(job_dir)):
+                if f.startswith('clip_') and f.endswith('.mp4'):
+                    zipf.write(os.path.join(job_dir, f), f)
+                    
+    return send_from_directory(job_dir, zip_filename, as_attachment=True, download_name="clips.zip")
+
+def get_local_video_metadata(file_path):
+    """Runs FFmpeg on a local file to extract its duration and resolution via stderr logs."""
+    cmd = [FFMPEG_EXE, '-i', file_path]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    output = res.stderr
+    
+    duration = None
+    width = None
+    height = None
+    
+    # Duration: 00:05:23.45
+    dur_match = re.search(r'Duration:\s+(\d{2}):(\d{2}):(\d{2})\.(\d{2})', output)
+    if dur_match:
+        hours = int(dur_match.group(1))
+        minutes = int(dur_match.group(2))
+        seconds = int(dur_match.group(3))
+        hundredths = int(dur_match.group(4))
+        duration = hours * 3600 + minutes * 60 + seconds + hundredths / 100.0
+        
+    # Stream #0:0: Video: h264 (...), 1920x1080 [SAR ... DAR ...]
+    res_match = re.search(r'Video:.*?\s+(\d{3,5})x(\d{3,5})', output)
+    if res_match:
+        width = int(res_match.group(1))
+        height = int(res_match.group(2))
+        
+    return {
+        'duration': duration,
+        'width': width,
+        'height': height
+    }
+
+def run_localcut_task(job_id, clip_length, crop_9_16, skip_start, duration, custom_skip_start, custom_skip_end, skip_end_start, skip_end_end):
+    try:
+        localcut_jobs[job_id].update({
+            'status': 'processing',
+            'progress': 0,
+            'current_step': 'Initializing video segments...'
+        })
+        
+        job_dir = os.path.join(LOCALCUT_DIR, job_id)
+        full_video_path = os.path.join(job_dir, 'full.mp4')
+        
+        if not os.path.exists(full_video_path):
+            raise Exception("Uploaded video file not found.")
+            
+        # Calculate segments
+        playable_intervals = []
+        if duration > skip_start:
+            playable_intervals.append((skip_start, duration))
+            
+        def subtract_interval(intervals, x, y):
+            new_intervals = []
+            for start, end in intervals:
+                if y <= start or x >= end:
+                    new_intervals.append((start, end))
+                else:
+                    if x > start:
+                        new_intervals.append((start, x))
+                    if y < end:
+                        new_intervals.append((y, end))
+            return new_intervals
+            
+        if custom_skip_start > 0 and custom_skip_end > custom_skip_start:
+            playable_intervals = subtract_interval(playable_intervals, custom_skip_start, custom_skip_end)
+            
+        if skip_end_start > 0 and skip_end_end > skip_end_start:
+            playable_intervals = subtract_interval(playable_intervals, skip_end_start, skip_end_end)
+            
+        import math
+        segments = []
+        for start, end in playable_intervals:
+            if end <= start:
+                continue
+            interval_duration = end - start
+            num_segs = math.ceil(interval_duration / clip_length)
+            for i in range(num_segs):
+                seg_start = start + i * clip_length
+                seg_duration = min(clip_length, end - seg_start)
+                segments.append((seg_start, seg_duration))
+                
+        num_segments = len(segments)
+        if num_segments == 0:
+            raise Exception("No playable video remaining after skips.")
+            
+        localcut_jobs[job_id].update({
+            'status': 'processing',
+            'progress': 0,
+            'current_step': f"Splitting into {num_segments} clips..."
+        })
+        
+        for i, (segment_start_time, segment_duration) in enumerate(segments):
+            output_filename = f"clip_{i+1}.mp4"
+            output_clip_path = os.path.join(job_dir, output_filename)
+            
+            localcut_jobs[job_id].update({
+                'current_step': f"Processing clip {i+1} of {num_segments} ({int(segment_duration)}s)...",
+                'progress': int((i / num_segments) * 100)
+            })
+            
+            if crop_9_16:
+                ffmpeg_cmd = [
+                    FFMPEG_EXE, '-y',
+                    '-ss', str(segment_start_time),
+                    '-i', full_video_path,
+                    '-t', str(segment_duration),
+                    '-vf', 'crop=2*trunc(ih*9/32):2*trunc(ih/2),fps=fps=60',
+                    '-c:v', 'libx264',
+                    '-preset', 'ultrafast',
+                    '-crf', '23',
+                    '-c:a', 'aac',
+                    '-threads', '0',
+                    output_clip_path
+                ]
+            else:
+                ffmpeg_cmd = [
+                    FFMPEG_EXE, '-y',
+                    '-ss', str(segment_start_time),
+                    '-i', full_video_path,
+                    '-t', str(segment_duration),
+                    '-vf', 'fps=fps=60',
+                    '-c:v', 'libx264',
+                    '-preset', 'ultrafast',
+                    '-crf', '23',
+                    '-c:a', 'aac',
+                    '-threads', '0',
+                    output_clip_path
+                ]
+                
+            ffmpeg_res = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
+            if ffmpeg_res.returncode != 0:
+                print(f"Local FFmpeg error: {ffmpeg_res.stderr}")
+                raise Exception(f"Failed to generate clip {i+1}.")
+                
+            output_thumb_name = f"clip_{i+1}.jpg"
+            output_thumb_path = os.path.join(job_dir, output_thumb_name)
+            ffmpeg_thumb_cmd = [
+                FFMPEG_EXE, '-y',
+                '-ss', '1',
+                '-i', output_clip_path,
+                '-vframes', '1',
+                '-q:v', '2',
+                output_thumb_path
+            ]
+            subprocess.run(ffmpeg_thumb_cmd, capture_output=True)
+            
+            size = os.path.getsize(output_clip_path)
+            localcut_jobs[job_id]['clips'].append({
+                'clip_index': i + 1,
+                'filename': output_filename,
+                'display_name': f"Local_Clip_{i+1}.mp4",
+                'thumbnail': output_thumb_name,
+                'duration': segment_duration,
+                'duration_str': format_time(segment_duration),
+                'size': size,
+                'size_str': format_size(size)
+            })
+            
+        try:
+            os.remove(full_video_path)
+        except Exception:
+            pass
+            
+        localcut_jobs[job_id].update({
+            'status': 'finished',
+            'progress': 100,
+            'current_step': 'All clips processed successfully!'
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        localcut_jobs[job_id].update({
+            'status': 'error',
+            'error': str(e)
+        })
+
+@app.route('/api/localcut/upload', methods=['POST'])
+def localcut_upload():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+        
+    job_id = str(uuid.uuid4())
+    job_dir = os.path.join(LOCALCUT_DIR, job_id)
+    os.makedirs(job_dir, exist_ok=True)
+    
+    input_path = os.path.join(job_dir, 'full.mp4')
+    file.save(input_path)
+    
+    try:
+        meta = get_local_video_metadata(input_path)
+        if not meta['duration']:
+            raise Exception("Could not parse video duration.")
+            
+        localcut_jobs[job_id] = {
+            'status': 'uploaded',
+            'progress': 0,
+            'current_step': 'Ready for processing.',
+            'clips': [],
+            'duration': meta['duration'],
+            'width': meta['width'],
+            'height': meta['height'],
+            'filename': file.filename
+        }
+        
+        return jsonify({
+            'status': 'uploaded',
+            'job_id': job_id,
+            'duration': meta['duration'],
+            'width': meta['width'],
+            'height': meta['height'],
+            'filename': file.filename
+        })
+        
+    except Exception as e:
+        try:
+            shutil.rmtree(job_dir)
+        except Exception:
+            pass
+        return jsonify({'error': f"Failed to analyze uploaded video: {str(e)}"}), 500
+
+@app.route('/api/localcut/process', methods=['POST'])
+def localcut_process():
+    data = request.get_json()
+    if not data or 'job_id' not in data:
+        return jsonify({'error': 'Job ID is required'}), 400
+        
+    job_id = data['job_id']
+    clip_length = int(data.get('clip_length', 60))
+    crop_9_16 = bool(data.get('crop_9_16', False))
+    skip_start = int(data.get('skip_start', 0))
+    skip_end_start = int(data.get('skip_end_start', 0))
+    skip_end_end = int(data.get('skip_end_end', 0))
+    custom_skip_start = int(data.get('custom_skip_start', 0))
+    custom_skip_end = int(data.get('custom_skip_end', 0))
+    duration = int(data.get('duration', 0))
+    
+    if duration <= 0:
+        return jsonify({'error': 'Invalid video duration'}), 400
+        
+    if job_id not in localcut_jobs:
+        return jsonify({'error': 'Uploaded job not found'}), 404
+        
+    thread = threading.Thread(
+        target=run_localcut_task,
+        args=(job_id, clip_length, crop_9_16, skip_start, duration, custom_skip_start, custom_skip_end, skip_end_start, skip_end_end)
+    )
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({
+        'status': 'started',
+        'job_id': job_id
+    })
+
+@app.route('/api/localcut/status/<job_id>')
+def localcut_status(job_id):
+    status_info = localcut_jobs.get(job_id)
+    if not status_info:
+        return jsonify({'status': 'not_found'}), 404
+    return jsonify(status_info)
+
+@app.route('/api/localcut/download/<job_id>/<filename>')
+def serve_localcut_file(job_id, filename):
+    if not re.match(r'^clip_\d+\.(mp4|jpg)$', filename):
+        return jsonify({'error': 'Invalid file request'}), 400
+        
+    job_dir = os.path.join(LOCALCUT_DIR, job_id)
+    response = send_from_directory(job_dir, filename, as_attachment=filename.endswith('.mp4'))
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
+
+@app.route('/api/localcut/download-zip/<job_id>')
+def serve_localcut_zip(job_id):
+    job_dir = os.path.join(LOCALCUT_DIR, job_id)
+    if not os.path.exists(job_dir):
+        return jsonify({'error': 'Job not found'}), 404
+        
+    zip_filename = f"clips_{job_id}.zip"
+    zip_path = os.path.join(job_dir, zip_filename)
+    
     if not os.path.exists(zip_path):
         with zipfile.ZipFile(zip_path, 'w') as zipf:
             for f in sorted(os.listdir(job_dir)):

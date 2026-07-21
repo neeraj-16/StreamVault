@@ -296,22 +296,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tabDownloader = document.getElementById('tab-downloader');
     const tabClipcut = document.getElementById('tab-clipcut');
+    const tabLocalcut = document.getElementById('tab-localcut');
     const downloaderContent = document.getElementById('downloader-content');
     const clipcutContent = document.getElementById('clipcut-content');
+    const localcutContent = document.getElementById('localcut-content');
 
     // Tab toggling
     tabDownloader.addEventListener('click', () => {
         tabDownloader.classList.add('active');
         tabClipcut.classList.remove('active');
+        tabLocalcut.classList.remove('active');
         downloaderContent.classList.remove('hidden');
         clipcutContent.classList.add('hidden');
+        localcutContent.classList.add('hidden');
     });
 
     tabClipcut.addEventListener('click', () => {
         tabClipcut.classList.add('active');
         tabDownloader.classList.remove('active');
+        tabLocalcut.classList.remove('active');
         clipcutContent.classList.remove('hidden');
         downloaderContent.classList.add('hidden');
+        localcutContent.classList.add('hidden');
+    });
+
+    tabLocalcut.addEventListener('click', () => {
+        tabLocalcut.classList.add('active');
+        tabDownloader.classList.remove('active');
+        tabClipcut.classList.remove('active');
+        localcutContent.classList.remove('hidden');
+        downloaderContent.classList.add('hidden');
+        clipcutContent.classList.add('hidden');
     });
 
     // Elements
@@ -765,5 +780,419 @@ document.addEventListener('DOMContentLoaded', () => {
 
         clipcutResultsPanel.classList.remove('hidden');
         clipcutResultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // --- LocalCut Frontend Controller ---
+    const localcutUploadZone = document.getElementById('localcut-upload-zone');
+    const localcutFileInput = document.getElementById('localcut-file-input');
+    const localcutFileName = document.getElementById('localcut-file-name');
+    const btnLocalcutUploadSubmit = document.getElementById('btn-localcut-upload-submit');
+    
+    const localcutUploadProgress = document.getElementById('localcut-upload-progress');
+    const localcutUploadFill = document.getElementById('localcut-upload-fill');
+    const localcutUploadStatus = document.getElementById('localcut-upload-status');
+    const localcutErrorMessage = document.getElementById('localcut-error-message');
+    const localcutErrorText = document.getElementById('localcut-error-text');
+
+    const localcutConfigPanel = document.getElementById('localcut-config-panel');
+    const localcutVideoTitle = document.getElementById('localcut-video-title');
+    const localcutVideoResolution = document.getElementById('localcut-video-resolution');
+    const localcutVideoDurationDisplay = document.getElementById('localcut-video-duration-display');
+
+    const localcutClipLengthSelect = document.getElementById('localcut-clip-length');
+    const localcutAspectRatioSelect = document.getElementById('localcut-aspect-ratio');
+
+    const localcutSkipStartMin = document.getElementById('localcut-skip-start-min');
+    const localcutSkipStartSec = document.getElementById('localcut-skip-start-sec');
+    const localcutSkipEndStartMin = document.getElementById('localcut-skip-end-start-min');
+    const localcutSkipEndStartSec = document.getElementById('localcut-skip-end-start-sec');
+    const localcutSkipEndEndMin = document.getElementById('localcut-skip-end-end-min');
+    const localcutSkipEndEndSec = document.getElementById('localcut-skip-end-end-sec');
+    const localcutCustomSkipStartMin = document.getElementById('localcut-custom-skip-start-min');
+    const localcutCustomSkipStartSec = document.getElementById('localcut-custom-skip-start-sec');
+    const localcutCustomSkipEndMin = document.getElementById('localcut-custom-skip-end-min');
+    const localcutCustomSkipEndSec = document.getElementById('localcut-custom-skip-end-sec');
+
+    const localcutSummaryClipsCount = document.getElementById('localcut-summary-clips-count');
+    const localcutSummaryTime = document.getElementById('localcut-summary-time');
+    const btnLocalcutGenerate = document.getElementById('btn-localcut-generate');
+
+    const localcutProcessPanel = document.getElementById('localcut-process-panel');
+    const localcutProcessStatusTitle = document.getElementById('localcut-process-status-title');
+    const localcutProcessStatusText = document.getElementById('localcut-process-status-text');
+    const localcutProcessProgressFill = document.getElementById('localcut-process-progress-fill');
+    const localcutProcessTaskLog = document.getElementById('localcut-process-task-log');
+
+    const localcutResultsPanel = document.getElementById('localcut-results-panel');
+    const localcutClipsGrid = document.getElementById('localcut-clips-grid');
+    const btnLocalcutDownloadZip = document.getElementById('btn-localcut-download-zip');
+
+    let localcutFile = null;
+    let localcutJobId = null;
+    let localcutDuration = 0;
+    let localcutPollInterval = null;
+
+    // Dropzone drag-and-drop triggers
+    localcutUploadZone.addEventListener('click', () => {
+        localcutFileInput.click();
+    });
+
+    localcutFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleLocalcutFileSelect(e.target.files[0]);
+        }
+    });
+
+    localcutUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        localcutUploadZone.classList.add('dragover');
+    });
+
+    localcutUploadZone.addEventListener('dragleave', () => {
+        localcutUploadZone.classList.remove('dragover');
+    });
+
+    localcutUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        localcutUploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            handleLocalcutFileSelect(e.dataTransfer.files[0]);
+        }
+    });
+
+    function handleLocalcutFileSelect(file) {
+        localcutFile = file;
+        localcutFileName.textContent = `Selected: ${file.name} (${formatSize(file.size)})`;
+        localcutFileName.classList.remove('hidden');
+        btnLocalcutUploadSubmit.disabled = false;
+        localcutErrorMessage.classList.add('hidden');
+    }
+
+    // Perform Upload via XMLHttpRequest (to support live upload progress monitoring)
+    btnLocalcutUploadSubmit.addEventListener('click', () => {
+        if (!localcutFile) return;
+
+        localcutErrorMessage.classList.add('hidden');
+        localcutUploadProgress.classList.remove('hidden');
+        btnLocalcutUploadSubmit.disabled = true;
+
+        const formData = new FormData();
+        formData.append('file', localcutFile);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/localcut/upload', true);
+
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                localcutUploadFill.style.width = `${percent}%`;
+                localcutUploadStatus.textContent = `Uploading: ${percent}%`;
+            }
+        });
+
+        xhr.onload = () => {
+            if (xhr.status === 200) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    localcutJobId = data.job_id;
+                    localcutDuration = data.duration;
+                    
+                    localcutVideoTitle.textContent = data.filename;
+                    localcutVideoResolution.textContent = `Resolution: ${data.width || 'Unknown'}x${data.height || 'Unknown'}`;
+                    localcutVideoDurationDisplay.textContent = `Duration: ${formatTime(data.duration)}`;
+                    
+                    localcutUploadProgress.classList.add('hidden');
+                    localcutUploadZone.classList.add('hidden');
+                    btnLocalcutUploadSubmit.classList.add('hidden');
+                    
+                    localcutConfigPanel.classList.remove('hidden');
+                    localcutConfigPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    updateLocalcutSummary();
+                    
+                } catch (err) {
+                    showLocalcutError("Invalid upload response from server.");
+                }
+            } else {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    showLocalcutError(data.error || "Upload failed.");
+                } catch (e) {
+                    showLocalcutError(`Server error (${xhr.status}) during upload.`);
+                }
+            }
+        };
+
+        xhr.onerror = () => {
+            showLocalcutError("Network error occurred during video upload.");
+        };
+
+        xhr.send(formData);
+    });
+
+    function showLocalcutError(msg) {
+        localcutErrorText.textContent = msg;
+        localcutErrorMessage.classList.remove('hidden');
+        localcutUploadProgress.classList.add('hidden');
+        btnLocalcutUploadSubmit.disabled = false;
+    }
+
+    const localcutInputs = [
+        localcutClipLengthSelect, localcutAspectRatioSelect,
+        localcutSkipStartMin, localcutSkipStartSec,
+        localcutSkipEndStartMin, localcutSkipEndStartSec, localcutSkipEndEndMin, localcutSkipEndEndSec,
+        localcutCustomSkipStartMin, localcutCustomSkipStartSec, localcutCustomSkipEndMin, localcutCustomSkipEndSec
+    ];
+
+    localcutInputs.forEach(input => {
+        input.addEventListener('input', updateLocalcutSummary);
+    });
+
+    function updateLocalcutSummary() {
+        const clipLength = parseInt(localcutClipLengthSelect.value) || 60;
+        
+        const skipStart = (parseInt(localcutSkipStartMin.value) || 0) * 60 + (parseInt(localcutSkipStartSec.value) || 0);
+        const skipEndStart = (parseInt(localcutSkipEndStartMin.value) || 0) * 60 + (parseInt(localcutSkipEndStartSec.value) || 0);
+        const skipEndEnd = (parseInt(localcutSkipEndEndMin.value) || 0) * 60 + (parseInt(localcutSkipEndEndSec.value) || 0);
+        const customSkipStart = (parseInt(localcutCustomSkipStartMin.value) || 0) * 60 + (parseInt(localcutCustomSkipStartSec.value) || 0);
+        const customSkipEnd = (parseInt(localcutCustomSkipEndMin.value) || 0) * 60 + (parseInt(localcutCustomSkipEndSec.value) || 0);
+
+        function subtractInterval(intervals, x, y) {
+            let newIntervals = [];
+            for (let i = 0; i < intervals.length; i++) {
+                const start = intervals[i][0];
+                const end = intervals[i][1];
+                if (y <= start || x >= end) {
+                    newIntervals.push([start, end]);
+                } else {
+                    if (x > start) newIntervals.push([start, x]);
+                    if (y < end) newIntervals.push([y, end]);
+                }
+            }
+            return newIntervals;
+        }
+
+        let intervals = [[skipStart, localcutDuration]];
+        if (customSkipStart > 0 && customSkipEnd > customSkipStart) {
+            intervals = subtractInterval(intervals, customSkipStart, customSkipEnd);
+        }
+        if (skipEndStart > 0 && skipEndEnd > skipEndStart) {
+            intervals = subtractInterval(intervals, skipEndStart, skipEndEnd);
+        }
+
+        let totalDuration = 0;
+        let clipsCount = 0;
+        intervals.forEach(([start, end]) => {
+            if (end > start) {
+                const diff = end - start;
+                totalDuration += diff;
+                clipsCount += Math.ceil(diff / clipLength);
+            }
+        });
+
+        localcutSummaryClipsCount.textContent = `${clipsCount} clips`;
+
+        const isCropped = localcutAspectRatioSelect.value === 'crop_9_16';
+        if (clipsCount > 0) {
+            const timePerClip = isCropped ? 2.5 : 1.0; 
+            const totalSeconds = Math.ceil(clipsCount * timePerClip);
+            localcutSummaryTime.textContent = `~${totalSeconds}s processing time`;
+        } else {
+            localcutSummaryTime.textContent = "--";
+        }
+    }
+
+    btnLocalcutGenerate.addEventListener('click', async () => {
+        const clipLength = parseInt(localcutClipLengthSelect.value) || 60;
+        const crop_9_16 = localcutAspectRatioSelect.value === 'crop_9_16';
+        
+        const skipStart = (parseInt(localcutSkipStartMin.value) || 0) * 60 + (parseInt(localcutSkipStartSec.value) || 0);
+        const skipEndStart = (parseInt(localcutSkipEndStartMin.value) || 0) * 60 + (parseInt(localcutSkipEndStartSec.value) || 0);
+        const skipEndEnd = (parseInt(localcutSkipEndEndMin.value) || 0) * 60 + (parseInt(localcutSkipEndEndSec.value) || 0);
+        const customSkipStart = (parseInt(localcutCustomSkipStartMin.value) || 0) * 60 + (parseInt(localcutCustomSkipStartSec.value) || 0);
+        const customSkipEnd = (parseInt(localcutCustomSkipEndMin.value) || 0) * 60 + (parseInt(localcutCustomSkipEndSec.value) || 0);
+
+        localcutInputs.forEach(input => {
+            if (input !== localcutClipLengthSelect && input !== localcutAspectRatioSelect) {
+                input.value = '';
+            }
+        });
+
+        localcutConfigPanel.classList.add('hidden');
+        localcutProcessPanel.classList.remove('hidden');
+        localcutProcessPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        try {
+            const response = await fetch('/api/localcut/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    job_id: localcutJobId,
+                    clip_length: clipLength,
+                    crop_9_16: crop_9_16,
+                    skip_start: skipStart,
+                    skip_end_start: skipEndStart,
+                    skip_end_end: skipEndEnd,
+                    custom_skip_start: customSkipStart,
+                    custom_skip_end: customSkipEnd,
+                    duration: localcutDuration
+                })
+            });
+
+            const data = await handleApiResponse(response, 'Failed to launch local processing task.');
+            pollLocalcutProgress(data.job_id);
+
+        } catch (err) {
+            localcutProcessPanel.classList.add('hidden');
+            localcutConfigPanel.classList.remove('hidden');
+            alert(err.message);
+        }
+    });
+
+    function pollLocalcutProgress(jobId) {
+        if (localcutPollInterval) clearInterval(localcutPollInterval);
+
+        localcutPollInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/localcut/status/${jobId}`);
+                const data = await handleApiResponse(response, 'Lost connection to local processing state.');
+
+                if (data.status === 'processing') {
+                    localcutProcessStatusTitle.textContent = "Processing Video Segments";
+                    localcutProcessStatusText.textContent = data.current_step;
+                    localcutProcessProgressFill.style.width = `${data.progress}%`;
+                    localcutProcessTaskLog.textContent = data.current_step;
+                }
+                else if (data.status === 'finished') {
+                    clearInterval(localcutPollInterval);
+                    renderLocalcutResults(data.clips, jobId);
+                }
+                else if (data.status === 'error') {
+                    clearInterval(localcutPollInterval);
+                    throw new Error(data.error || 'Local segment processing failed.');
+                }
+
+            } catch (err) {
+                clearInterval(localcutPollInterval);
+                localcutProcessPanel.classList.add('hidden');
+                alert(err.message);
+                
+                localcutUploadZone.classList.remove('hidden');
+                btnLocalcutUploadSubmit.classList.remove('hidden');
+            }
+        }, 1000);
+    }
+
+    function renderLocalcutResults(clips, jobId) {
+        localcutProcessPanel.classList.add('hidden');
+        localcutClipsGrid.innerHTML = '';
+
+        const aspect = localcutAspectRatioSelect.value;
+        const isCropped = aspect === 'crop_9_16';
+
+        if (window.location.hostname.includes('trycloudflare.com')) {
+            const existingTip = document.querySelector('#localcut-content .local-tip-banner');
+            if (existingTip) existingTip.remove();
+
+            const localTip = document.createElement('div');
+            localTip.className = 'local-tip-banner';
+            localTip.innerHTML = `
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Are you running this on this Mac? Use <a href="http://127.0.0.1:5000" target="_blank"><b>http://127.0.0.1:5000</b></a> for <b>instant</b> 0-second local downloads!</span>
+            `;
+            localcutClipsGrid.parentNode.insertBefore(localTip, localcutClipsGrid);
+        }
+
+        clips.forEach(clip => {
+            const card = document.createElement('div');
+            card.className = 'clip-card';
+
+            const thumbUrl = `/api/localcut/download/${jobId}/${clip.thumbnail}`;
+            const clipUrl = `/api/localcut/download/${jobId}/${clip.filename}`;
+
+            card.innerHTML = `
+                <div class="clip-card-thumbnail-wrapper ${isCropped ? 'crop-9-16' : ''}">
+                    <img src="${thumbUrl}" alt="Clip preview">
+                    <span class="duration-badge">${clip.duration_str}</span>
+                </div>
+                <div class="clip-card-body">
+                    <div class="clip-card-meta">
+                        <span class="clip-card-title">Clip #${clip.clip_index}</span>
+                        <span class="clip-card-size">MP4 &bull; ${clip.size_str}</span>
+                    </div>
+                    <div class="clip-actions-row">
+                        <button class="btn-preview-clip" data-href="${clipUrl}" data-title="Clip #${clip.clip_index}">
+                            <span>Preview</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button class="btn-download-clip" data-href="${clipUrl}" data-name="Local_Clip_${clip.clip_index}.mp4">
+                            <span>Download</span>
+                            <i class="fa-solid fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Download Trigger
+            card.querySelector('.btn-download-clip').addEventListener('click', (e) => {
+                const button = e.currentTarget;
+                const link = document.createElement('a');
+                
+                if (clipBlobCache[clipUrl]) {
+                    link.href = clipBlobCache[clipUrl];
+                } else {
+                    link.href = clipUrl;
+                }
+                
+                link.download = button.getAttribute('data-name');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // Preview Trigger
+            card.querySelector('.btn-preview-clip').addEventListener('click', async (e) => {
+                const button = e.currentTarget;
+                const icon = button.querySelector('i');
+                const span = button.querySelector('span');
+                const originalText = span.textContent;
+
+                if (!clipBlobCache[clipUrl]) {
+                    button.disabled = true;
+                    span.textContent = "Loading...";
+                    icon.className = "fa-solid fa-circle-notch fa-spin";
+                }
+
+                try {
+                    const objectUrl = await getClipObjectURL(clipUrl);
+                    previewModalTitle.textContent = `Preview - ${button.getAttribute('data-title')}`;
+                    previewVideo.src = objectUrl;
+                    previewModal.classList.remove('hidden');
+                    previewVideo.play().catch(err => console.log("Autoplay blocked:", err));
+                } catch (err) {
+                    alert("Preview failed: " + err.message);
+                } finally {
+                    button.disabled = false;
+                    span.textContent = originalText;
+                    icon.className = "fa-solid fa-play";
+                }
+            });
+
+            localcutClipsGrid.appendChild(card);
+        });
+
+        // Set ZIP download action
+        btnLocalcutDownloadZip.onclick = () => {
+            const zipUrl = `/api/localcut/download-zip/${jobId}`;
+            const link = document.createElement('a');
+            link.href = zipUrl;
+            link.download = 'local_clips.zip';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        localcutResultsPanel.classList.remove('hidden');
+        localcutResultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 });

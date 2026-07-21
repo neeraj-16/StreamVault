@@ -1119,3 +1119,33 @@ body {
     color: #a78bfa;
     font-size: 1.1rem;
 }
+
+/* Drag and Drop Upload Zone */
+.upload-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    margin-bottom: 10px;
+}
+.upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent-purple);
+    background: rgba(155, 93, 229, 0.05);
+    box-shadow: 0 0 20px rgba(155, 93, 229, 0.1);
+}
+.upload-text {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+.upload-text .browse-btn {
+    color: var(--accent-purple);
+    font-weight: 700;
+    text-decoration: underline;
+}
+.upload-progress-container {
+    width: 100%;
+    margin-top: 20px;
+}

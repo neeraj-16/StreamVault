@@ -389,6 +389,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // On-demand blob cache for saving mobile data
     const clipBlobCache = {};
 
+    // Global Close Preview Modal event listeners
+    btnClosePreview.addEventListener('click', () => {
+        previewModal.classList.add('hidden');
+        previewVideo.pause();
+        previewVideo.src = '';
+    });
+
+    previewModal.addEventListener('click', (e) => {
+        if (e.target === previewModal) {
+            previewModal.classList.add('hidden');
+            previewVideo.pause();
+            previewVideo.src = '';
+        }
+    });
+
     async function getClipObjectURL(clipUrl) {
         if (clipBlobCache[clipUrl]) {
             return clipBlobCache[clipUrl];
@@ -752,20 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clipsGrid.appendChild(card);
         });
 
-        // Close Preview Modal event listeners
-        btnClosePreview.onclick = () => {
-            previewModal.classList.add('hidden');
-            previewVideo.pause();
-            previewVideo.src = '';
-        };
 
-        previewModal.onclick = (e) => {
-            if (e.target === previewModal) {
-                previewModal.classList.add('hidden');
-                previewVideo.pause();
-                previewVideo.src = '';
-            }
-        };
 
         // Set ZIP download action
         btnDownloadZip.onclick = () => {

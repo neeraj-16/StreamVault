@@ -860,6 +860,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    function formatSize(bytes) {
+        if (!bytes) return "0 Bytes";
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function formatTime(seconds) {
+        if (seconds === null || seconds === undefined) return "N/A";
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        const pad = (num) => String(num).padStart(2, '0');
+        if (h > 0) {
+            return `${h}:${pad(m)}:${pad(s)}`;
+        }
+        return `${pad(m)}:${pad(s)}`;
+    }
+
     function handleLocalcutFileSelect(file) {
         localcutFile = file;
         localcutFileName.textContent = `Selected: ${file.name} (${formatSize(file.size)})`;
